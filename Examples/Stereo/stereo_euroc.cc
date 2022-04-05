@@ -36,11 +36,21 @@ void LoadImages(const string &strPathLeft, const string &strPathRight, const str
 
 int main(int argc, char **argv)
 {
-    if(argc != 6)
-    {
-        cerr << endl << "Usage: ./stereo_euroc path_to_vocabulary path_to_settings path_to_left_folder path_to_right_folder path_to_times_file" << endl;
-        return 1;
-    }
+     // if (argc != 6)
+    // {
+    //     cerr
+    //         << endl
+    //         << "Usage: ./stereo_euroc path_to_vocabulary path_to_settings path_to_left_folder path_to_right_folder path_to_times_file"
+    //         << endl;
+    //     return 1;
+    // }
+
+    // ../Examples/Stereo/stereo_kitti ../Vocabulary/ORBvoc.txt ../Examples/Stereo/KITTI03.yaml /mnt/hgfs/code/data_odometry_gray/00/
+    argv[1] = "../Vocabulary/ORBvoc.bin";
+    argv[2] = "../Examples/Stereo/EuRoC.yaml";
+    argv[3] = "/home/cw/thesis_dataset/data_EuRoC/V1_01_easy/mav0/cam0/data";
+    argv[4] = "/home/cw/thesis_dataset/data_EuRoC/V1_01_easy/mav0/cam1/data";
+    argv[5] = "../Examples/Stereo/EuRoC_TimeStamps/V101.txt";
 
     // Retrieve paths to images
     vector<string> vstrImageLeft;
@@ -139,7 +149,7 @@ int main(int argc, char **argv)
         double tframe = vTimeStamp[ni];
 
 
-#ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC14
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 #else
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
@@ -148,7 +158,7 @@ int main(int argc, char **argv)
         // Pass the images to the SLAM system
         SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
 
-#ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC14
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 #else
         std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
