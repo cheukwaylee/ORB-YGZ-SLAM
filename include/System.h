@@ -1,23 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef YGZ_SYSTEM_H_
 #define YGZ_SYSTEM_H_
@@ -30,7 +29,8 @@
 // System
 // 协调各个线程一同工作
 
-namespace ygz {
+namespace ygz
+{
 
     class Viewer;
 
@@ -50,18 +50,18 @@ namespace ygz {
 
     class KeyFrameDatabase;
 
-    class System {
+    class System
+    {
     public:
-
         // Input sensor
-        enum eSensor {
+        enum eSensor
+        {
             MONOCULAR = 0,
             STEREO = 1,
             RGBD = 2
         };
 
     public:
-
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
         System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer = true, ConfigParam *pParams = NULL);
@@ -90,9 +90,8 @@ namespace ygz {
          * @param[in] vimu the imu measurements from last image frame
          * @param[in] timestamp time
          * @return the esitmated pose
-        */
+         */
         cv::Mat TrackMonoVI(const cv::Mat &im, const std::vector<IMUData> &vimu, const double &timestamp);
-
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
@@ -154,49 +153,48 @@ namespace ygz {
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Returns the camera pose (empty if tracking fails).
 
-        ConfigParam *mpParams =nullptr;  // IMU related params
+        ConfigParam *mpParams = nullptr; // IMU related params
 
     private:
-
         // Input sensor
         eSensor mSensor;
 
         // ORB vocabulary used for place recognition and feature matching.
-        ORBVocabulary *mpVocabulary =nullptr;
+        ORBVocabulary *mpVocabulary = nullptr;
 
         // KeyFrame database for place recognition (relocalization and loop detection).
-        KeyFrameDatabase *mpKeyFrameDatabase =nullptr;
+        KeyFrameDatabase *mpKeyFrameDatabase = nullptr;
 
         // Map structure that stores the pointers to all KeyFrames and MapPoints.
-        Map *mpMap =nullptr;
+        Map *mpMap = nullptr;
 
         // Tracker. It receives a frame and computes the associated camera pose.
         // It also decides when to insert a new keyframe, create some new MapPoints and
         // performs relocalization if tracking fails.
-        Tracking *mpTracker =nullptr;
+        Tracking *mpTracker = nullptr;
 
         // Local Mapper. It manages the local map and performs local bundle adjustment.
-        LocalMapping *mpLocalMapper =nullptr;
+        LocalMapping *mpLocalMapper = nullptr;
 
         // Loop Closer. It searches loops with every new keyframe. If there is a loop it performs
         // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
-        LoopClosing *mpLoopCloser =nullptr;
+        LoopClosing *mpLoopCloser = nullptr;
 
         // The viewer draws the map and the current camera pose. It uses Pangolin.
-        Viewer *mpViewer =nullptr;
+        Viewer *mpViewer = nullptr;
 
-        FrameDrawer *mpFrameDrawer =nullptr;
-        MapDrawer *mpMapDrawer =nullptr;
+        FrameDrawer *mpFrameDrawer = nullptr;
+        MapDrawer *mpMapDrawer = nullptr;
 
         // System threads: Local Mapping, Loop Closing, Viewer.
         // The Tracking thread "lives" in the main execution thread that creates the System object.
-        std::thread *mptLocalMapping =nullptr;
-        std::thread *mptLoopClosing =nullptr;
-        std::thread *mptViewer =nullptr;
+        std::thread *mptLocalMapping = nullptr;
+        std::thread *mptLoopClosing = nullptr;
+        std::thread *mptViewer = nullptr;
 
         // Reset flag
         std::mutex mMutexReset;
-        bool mbReset =false;
+        bool mbReset = false;
 
         // Change mode flags
         std::mutex mMutexMode;
@@ -210,6 +208,6 @@ namespace ygz {
         std::mutex mMutexState;
     };
 
-}// namespace ygz
+} // namespace ygz
 
 #endif // SYSTEM_H

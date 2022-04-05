@@ -1,9 +1,11 @@
 #include "g2otypes.h"
 
 using namespace ygz;
-namespace g2o {
+namespace g2o
+{
 
-    void EdgeNavStatePVR::computeError() {
+    void EdgeNavStatePVR::computeError()
+    {
         //
         const VertexNavStatePVR *vPVRi = static_cast<const VertexNavStatePVR *>(_vertices[0]);
         const VertexNavStatePVR *vPVRj = static_cast<const VertexNavStatePVR *>(_vertices[1]);
@@ -27,42 +29,40 @@ namespace g2o {
 
         // IMU Preintegration measurement
         const IMUPreintegrator &M = _measurement;
-        double dTij = M.getDeltaTime();   // Delta Time
+        double dTij = M.getDeltaTime(); // Delta Time
         double dT2 = dTij * dTij;
-        Vector3d dPij = M.getDeltaP();    // Delta Position pre-integration measurement
-        Vector3d dVij = M.getDeltaV();    // Delta Velocity pre-integration measurement
-        Sophus::SO3d dRij = Sophus::SO3(M.getDeltaR());  // Delta Rotation pre-integration measurement
+        Vector3d dPij = M.getDeltaP();                  // Delta Position pre-integration measurement
+        Vector3d dVij = M.getDeltaV();                  // Delta Velocity pre-integration measurement
+        Sophus::SO3d dRij = Sophus::SO3(M.getDeltaR()); // Delta Rotation pre-integration measurement
 
         // tmp variable, transpose of Ri
         Sophus::SO3d RiT = Ri.inverse();
         // residual error of Delta Position measurement
-        Vector3d rPij = RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2)
-                        - (dPij + M.getJPBiasg() * dBgi +
-                           M.getJPBiasa() * dBai);   // this line includes correction term of bias change.
+        Vector3d rPij = RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2) - (dPij + M.getJPBiasg() * dBgi +
+                                                                                M.getJPBiasa() * dBai); // this line includes correction term of bias change.
         // residual error of Delta Velocity measurement
-        Vector3d rVij = RiT * (Vj - Vi - GravityVec * dTij)
-                        - (dVij + M.getJVBiasg() * dBgi +
-                           M.getJVBiasa() * dBai);   //this line includes correction term of bias change
+        Vector3d rVij = RiT * (Vj - Vi - GravityVec * dTij) - (dVij + M.getJVBiasg() * dBgi +
+                                                               M.getJVBiasa() * dBai); // this line includes correction term of bias change
         // residual error of Delta Rotation measurement
         Sophus::SO3d dR_dbg = Sophus::SO3d::exp(M.getJRBiasg() * dBgi);
         Sophus::SO3d rRij = (dRij * dR_dbg).inverse() * RiT * Rj;
         Vector3d rPhiij = rRij.log();
 
-
-        Vector9d err;  // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=9
+        Vector9d err; // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=9
         err.setZero();
 
         // 9-Dim error vector order:
         // position-velocity-rotation
         // rPij - rVij - rPhiij
-        err.segment<3>(0) = rPij;       // position error
-        err.segment<3>(3) = rVij;       // velocity error
-        err.segment<3>(6) = rPhiij;     // rotation phi error
+        err.segment<3>(0) = rPij;   // position error
+        err.segment<3>(3) = rVij;   // velocity error
+        err.segment<3>(6) = rPhiij; // rotation phi error
 
         _error = err;
     }
 
-    void EdgeNavStatePVR::linearizeOplus() {
+    void EdgeNavStatePVR::linearizeOplus()
+    {
         //
         const VertexNavStatePVR *vPVRi = static_cast<const VertexNavStatePVR *>(_vertices[0]);
         const VertexNavStatePVR *vPVRj = static_cast<const VertexNavStatePVR *>(_vertices[1]);
@@ -86,17 +86,17 @@ namespace g2o {
 
         // IMU Preintegration measurement
         const IMUPreintegrator &M = _measurement;
-        double dTij = M.getDeltaTime();   // Delta Time
+        double dTij = M.getDeltaTime(); // Delta Time
         double dT2 = dTij * dTij;
 
         // some temp variable
-        Matrix3d I3x3 = Matrix3d::Identity();   // I_3x3
-        Matrix3d O3x3 = Matrix3d::Zero();       // 0_3x3
-        Matrix3d RiT = Ri.transpose();          // Ri^T
-        Matrix3d RjT = Rj.transpose();          // Rj^T
-        Vector3d rPhiij = _error.segment<3>(6); // residual of rotation, rPhiij
-        Matrix3d JrInv_rPhi = Sophus::SO3::JacobianRInv(rPhiij);    // inverse right jacobian of so3 term #rPhiij#
-        Matrix3d J_rPhi_dbg = M.getJRBiasg();              // jacobian of preintegrated rotation-angle to gyro bias i
+        Matrix3d I3x3 = Matrix3d::Identity();                    // I_3x3
+        Matrix3d O3x3 = Matrix3d::Zero();                        // 0_3x3
+        Matrix3d RiT = Ri.transpose();                           // Ri^T
+        Matrix3d RjT = Rj.transpose();                           // Rj^T
+        Vector3d rPhiij = _error.segment<3>(6);                  // residual of rotation, rPhiij
+        Matrix3d JrInv_rPhi = Sophus::SO3::JacobianRInv(rPhiij); // inverse right jacobian of so3 term #rPhiij#
+        Matrix3d J_rPhi_dbg = M.getJRBiasg();                    // jacobian of preintegrated rotation-angle to gyro bias i
 
         // 1.
         // increment is the same as Forster 15'RSS
@@ -130,25 +130,24 @@ namespace g2o {
 
         // 4.1
         // J_rPij_xxx_i for Vertex_PVR_i
-        JPVRi.block<3, 3>(0, 0) = -I3x3;      //J_rP_dpi
-        JPVRi.block<3, 3>(0, 3) = -RiT * dTij;  //J_rP_dvi
+        JPVRi.block<3, 3>(0, 0) = -I3x3;       // J_rP_dpi
+        JPVRi.block<3, 3>(0, 3) = -RiT * dTij; // J_rP_dvi
         JPVRi.block<3, 3>(0, 6) = Sophus::SO3::hat(
-                RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2));    //J_rP_dPhi_i
+            RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2)); // J_rP_dPhi_i
 
         // 4.2
         // J_rVij_xxx_i for Vertex_PVR_i
-        JPVRi.block<3, 3>(3, 0) = O3x3;    //dpi
-        JPVRi.block<3, 3>(3, 3) = -RiT;    //dvi
-        JPVRi.block<3, 3>(3, 6) = Sophus::SO3::hat(RiT * (Vj - Vi - GravityVec * dTij));    //dphi_i
+        JPVRi.block<3, 3>(3, 0) = O3x3;                                                  // dpi
+        JPVRi.block<3, 3>(3, 3) = -RiT;                                                  // dvi
+        JPVRi.block<3, 3>(3, 6) = Sophus::SO3::hat(RiT * (Vj - Vi - GravityVec * dTij)); // dphi_i
 
         // 4.3
         // J_rPhiij_xxx_i for Vertex_PVR_i
         Matrix3d ExprPhiijTrans = Sophus::SO3::exp(rPhiij).inverse().matrix();
         Matrix3d JrBiasGCorr = Sophus::SO3::JacobianR(J_rPhi_dbg * dBgi);
-        JPVRi.block<3, 3>(6, 0) = O3x3;    //dpi
-        JPVRi.block<3, 3>(6, 3) = O3x3;    //dvi
-        JPVRi.block<3, 3>(6, 6) = -JrInv_rPhi * RjT * Ri;    //dphi_i
-
+        JPVRi.block<3, 3>(6, 0) = O3x3;                   // dpi
+        JPVRi.block<3, 3>(6, 3) = O3x3;                   // dvi
+        JPVRi.block<3, 3>(6, 6) = -JrInv_rPhi * RjT * Ri; // dphi_i
 
         // 5.
         // For Vertex_PVR_j
@@ -157,22 +156,21 @@ namespace g2o {
 
         // 5.1
         // J_rPij_xxx_j for Vertex_PVR_j
-        JPVRj.block<3, 3>(0, 0) = RiT * Rj;  //dpj
-        JPVRj.block<3, 3>(0, 3) = O3x3;    //dvj
-        JPVRj.block<3, 3>(0, 6) = O3x3;    //dphi_j
+        JPVRj.block<3, 3>(0, 0) = RiT * Rj; // dpj
+        JPVRj.block<3, 3>(0, 3) = O3x3;     // dvj
+        JPVRj.block<3, 3>(0, 6) = O3x3;     // dphi_j
 
         // 5.2
         // J_rVij_xxx_j for Vertex_PVR_j
-        JPVRj.block<3, 3>(3, 0) = O3x3;    //dpj
-        JPVRj.block<3, 3>(3, 3) = RiT;    //dvj
-        JPVRj.block<3, 3>(3, 6) = O3x3;    //dphi_j
+        JPVRj.block<3, 3>(3, 0) = O3x3; // dpj
+        JPVRj.block<3, 3>(3, 3) = RiT;  // dvj
+        JPVRj.block<3, 3>(3, 6) = O3x3; // dphi_j
 
         // 5.3
         // J_rPhiij_xxx_j for Vertex_PVR_j
-        JPVRj.block<3, 3>(6, 0) = O3x3;    //dpj
-        JPVRj.block<3, 3>(6, 3) = O3x3;    //dvj
-        JPVRj.block<3, 3>(6, 6) = JrInv_rPhi;    //dphi_j
-
+        JPVRj.block<3, 3>(6, 0) = O3x3;       // dpj
+        JPVRj.block<3, 3>(6, 3) = O3x3;       // dvj
+        JPVRj.block<3, 3>(6, 6) = JrInv_rPhi; // dphi_j
 
         // 6.
         // For Vertex_Bias_i
@@ -181,16 +179,16 @@ namespace g2o {
 
         // 5.1
         // J_rPij_xxx_j for Vertex_Bias_i
-        JBiasi.block<3, 3>(0, 0) = -M.getJPBiasg();     //J_rP_dbgi
-        JBiasi.block<3, 3>(0, 3) = -M.getJPBiasa();     //J_rP_dbai
+        JBiasi.block<3, 3>(0, 0) = -M.getJPBiasg(); // J_rP_dbgi
+        JBiasi.block<3, 3>(0, 3) = -M.getJPBiasa(); // J_rP_dbai
 
         // J_rVij_xxx_j for Vertex_Bias_i
-        JBiasi.block<3, 3>(3, 0) = -M.getJVBiasg();    //dbg_i
-        JBiasi.block<3, 3>(3, 3) = -M.getJVBiasa();    //dba_i
+        JBiasi.block<3, 3>(3, 0) = -M.getJVBiasg(); // dbg_i
+        JBiasi.block<3, 3>(3, 3) = -M.getJVBiasa(); // dba_i
 
         // J_rPhiij_xxx_j for Vertex_Bias_i
-        JBiasi.block<3, 3>(6, 0) = -JrInv_rPhi * ExprPhiijTrans * JrBiasGCorr * J_rPhi_dbg;    //dbg_i
-        JBiasi.block<3, 3>(6, 3) = O3x3;    //dba_i
+        JBiasi.block<3, 3>(6, 0) = -JrInv_rPhi * ExprPhiijTrans * JrBiasGCorr * J_rPhi_dbg; // dbg_i
+        JBiasi.block<3, 3>(6, 3) = O3x3;                                                    // dba_i
 
         // Evaluate _jacobianOplus
         _jacobianOplus[0] = JPVRi;
@@ -198,7 +196,8 @@ namespace g2o {
         _jacobianOplus[2] = JBiasi;
     }
 
-    void EdgeNavStateBias::computeError() {
+    void EdgeNavStateBias::computeError()
+    {
         const VertexNavStateBias *vBiasi = static_cast<const VertexNavStateBias *>(_vertices[0]);
         const VertexNavStateBias *vBiasj = static_cast<const VertexNavStateBias *>(_vertices[1]);
 
@@ -206,25 +205,24 @@ namespace g2o {
         const NavState &NSj = vBiasj->estimate();
 
         // residual error of Gyroscope's bias, Forster 15'RSS
-        Vector3d rBiasG = (NSj.Get_BiasGyr() + NSj.Get_dBias_Gyr())
-                          - (NSi.Get_BiasGyr() + NSi.Get_dBias_Gyr());
+        Vector3d rBiasG = (NSj.Get_BiasGyr() + NSj.Get_dBias_Gyr()) - (NSi.Get_BiasGyr() + NSi.Get_dBias_Gyr());
 
         // residual error of Accelerometer's bias, Forster 15'RSS
-        Vector3d rBiasA = (NSj.Get_BiasAcc() + NSj.Get_dBias_Acc())
-                          - (NSi.Get_BiasAcc() + NSi.Get_dBias_Acc());
+        Vector3d rBiasA = (NSj.Get_BiasAcc() + NSj.Get_dBias_Acc()) - (NSi.Get_BiasAcc() + NSi.Get_dBias_Acc());
 
-        Vector6d err;  // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=6
+        Vector6d err; // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=6
         err.setZero();
         // 6-Dim error vector order:
         // deltabiasGyr_i-deltabiasAcc_i
         // rBiasGi - rBiasAi
-        err.segment<3>(0) = rBiasG;     // bias gyro error
-        err.segment<3>(3) = rBiasA;    // bias acc error
+        err.segment<3>(0) = rBiasG; // bias gyro error
+        err.segment<3>(3) = rBiasA; // bias acc error
 
         _error = err;
     }
 
-    void EdgeNavStateBias::linearizeOplus() {
+    void EdgeNavStateBias::linearizeOplus()
+    {
         // 6-Dim error vector order:
         // deltabiasGyr_i-deltabiasAcc_i
         // rBiasGi - rBiasAi
@@ -233,7 +231,8 @@ namespace g2o {
         _jacobianOplusXj = Matrix<double, 6, 6>::Identity();
     }
 
-    void EdgeNavStatePVRPointXYZ::linearizeOplus() {
+    void EdgeNavStatePVRPointXYZ::linearizeOplus()
+    {
         const VertexSBAPointXYZ *vPoint = static_cast<const VertexSBAPointXYZ *>(_vertices[0]);
         const VertexNavStatePVR *vNavState = static_cast<const VertexNavStatePVR *>(_vertices[1]);
 
@@ -284,7 +283,8 @@ namespace g2o {
         _jacobianOplusXj = JNavState;
     }
 
-    void EdgeNavStatePVRPointXYZOnlyPose::linearizeOplus() {
+    void EdgeNavStatePVRPointXYZOnlyPose::linearizeOplus()
+    {
         const VertexNavStatePVR *vNSPVR = static_cast<const VertexNavStatePVR *>(_vertices[0]);
 
         const NavState &ns = vNSPVR->estimate();
@@ -315,7 +315,7 @@ namespace g2o {
         // Pwb <- Pwb + Rwb*dPwb,   for NavState.P
 
         // Jacobian of Pc/error w.r.t dPwb
-        //Matrix3d J_Pc_dPwb = -Rcb;
+        // Matrix3d J_Pc_dPwb = -Rcb;
         Matrix<double, 2, 3> JdPwb = -Jpi * (-Rcb);
         // Jacobian of Pc/error w.r.t dRwb
         Vector3d Paux = Rcb * Rwb.transpose() * (Pw - Pwb);
@@ -331,7 +331,8 @@ namespace g2o {
         _jacobianOplusXi = JNavState;
     }
 
-    void EdgeNavStatePriorPVRBias::computeError() {
+    void EdgeNavStatePriorPVRBias::computeError()
+    {
         const VertexNavStatePVR *vNSPVR = static_cast<const VertexNavStatePVR *>(_vertices[0]);
         const VertexNavStateBias *vNSBias = static_cast<const VertexNavStateBias *>(_vertices[1]);
         const NavState &nsPVRest = vNSPVR->estimate();
@@ -360,9 +361,10 @@ namespace g2o {
 
         _error = err;
 
-        //Test log
+        // Test log
         if ((nsPVRest.Get_BiasGyr() - nsBiasest.Get_BiasGyr()).norm() > 1e-6 ||
-            (nsPVRest.Get_BiasAcc() - nsBiasest.Get_BiasAcc()).norm() > 1e-6) {
+            (nsPVRest.Get_BiasAcc() - nsBiasest.Get_BiasAcc()).norm() > 1e-6)
+        {
             std::cerr << "bias gyr not equal for PVR/Bias vertex in EdgeNavStatePriorPVRBias" << std::endl
                       << nsPVRest.Get_BiasGyr().transpose() << " / " << nsBiasest.Get_BiasGyr().transpose()
                       << std::endl;
@@ -372,7 +374,8 @@ namespace g2o {
         }
     }
 
-    void EdgeNavStatePriorPVRBias::linearizeOplus() {
+    void EdgeNavStatePriorPVRBias::linearizeOplus()
+    {
         // Estimated NavState
         const VertexNavStatePVR *vPVR = static_cast<const VertexNavStatePVR *>(_vertices[0]);
         const NavState &nsPVRest = vPVR->estimate();
@@ -386,15 +389,15 @@ namespace g2o {
         _jacobianOplusXj = Matrix<double, 15, 6>::Zero();
         _jacobianOplusXj.block<3, 3>(9, 0) = -Matrix3d::Identity();
         _jacobianOplusXj.block<3, 3>(12, 3) = -Matrix3d::Identity();
-
     }
 
-//--------------------------------------
+    //--------------------------------------
 
-/**
- * @brief EdgeNavStatePrior::EdgeNavStatePrior
- */
-    void EdgeNavStatePrior::computeError() {
+    /**
+     * @brief EdgeNavStatePrior::EdgeNavStatePrior
+     */
+    void EdgeNavStatePrior::computeError()
+    {
         // Estimated NavState
         const VertexNavState *v = static_cast<const VertexNavState *>(_vertices[0]);
         const NavState &nsest = v->estimate();
@@ -412,18 +415,19 @@ namespace g2o {
         err.segment<3>(6) = (nsprior.Get_R().inverse() * nsest.Get_R()).log();
         // err_bg = (bg+dbg) - (bg_prior+dbg_prior)
         err.segment<3>(9) =
-                (nsprior.Get_BiasGyr() + nsprior.Get_dBias_Gyr()) - (nsest.Get_BiasGyr() + nsest.Get_dBias_Gyr());
+            (nsprior.Get_BiasGyr() + nsprior.Get_dBias_Gyr()) - (nsest.Get_BiasGyr() + nsest.Get_dBias_Gyr());
         // err_ba = (ba+dba) - (ba_prior+dba_prior)
         err.segment<3>(12) =
-                (nsprior.Get_BiasAcc() + nsprior.Get_dBias_Acc()) - (nsest.Get_BiasAcc() + nsest.Get_dBias_Acc());
+            (nsprior.Get_BiasAcc() + nsprior.Get_dBias_Acc()) - (nsest.Get_BiasAcc() + nsest.Get_dBias_Acc());
 
         _error = err;
 
-        //Debug log
-        //std::cout<<"prior edge error: "<<std::endl<<_error.transpose()<<std::endl;
+        // Debug log
+        // std::cout<<"prior edge error: "<<std::endl<<_error.transpose()<<std::endl;
     }
 
-    void EdgeNavStatePrior::linearizeOplus() {
+    void EdgeNavStatePrior::linearizeOplus()
+    {
         // 1.
         // increment is the same as Forster 15'RSS
         // pi = pi + Ri*dpi
@@ -444,12 +448,13 @@ namespace g2o {
         _jacobianOplusXi.block<3, 3>(12, 12) = -Matrix3d::Identity();
     }
 
-/**
- * @brief VertexGravityW::VertexGravityW
- */
+    /**
+     * @brief VertexGravityW::VertexGravityW
+     */
     VertexGravityW::VertexGravityW() : BaseVertex<2, Vector3d>() {}
 
-    void VertexGravityW::oplusImpl(const double *update_) {
+    void VertexGravityW::oplusImpl(const double *update_)
+    {
         Eigen::Map<const Vector2d> update(update_);
         Vector3d update3 = Vector3d::Zero();
         update3.head(2) = update;
@@ -457,14 +462,16 @@ namespace g2o {
         _estimate = dR * _estimate;
     }
 
-/**
- * @brief EdgeNavStateGw::EdgeNavStateGw
- */
-    EdgeNavStateGw::EdgeNavStateGw() : BaseMultiEdge<15, IMUPreintegrator>() {
+    /**
+     * @brief EdgeNavStateGw::EdgeNavStateGw
+     */
+    EdgeNavStateGw::EdgeNavStateGw() : BaseMultiEdge<15, IMUPreintegrator>()
+    {
         resize(3);
     }
 
-    void EdgeNavStateGw::computeError() {
+    void EdgeNavStateGw::computeError()
+    {
         const VertexNavState *vi = static_cast<const VertexNavState *>(_vertices[0]);
         const VertexNavState *vj = static_cast<const VertexNavState *>(_vertices[1]);
         const VertexGravityW *vg = static_cast<const VertexGravityW *>(_vertices[2]);
@@ -487,56 +494,52 @@ namespace g2o {
 
         // IMU Preintegration measurement
         const IMUPreintegrator &M = _measurement;
-        double dTij = M.getDeltaTime();   // Delta Time
+        double dTij = M.getDeltaTime(); // Delta Time
         double dT2 = dTij * dTij;
-        Vector3d dPij = M.getDeltaP();    // Delta Position pre-integration measurement
-        Vector3d dVij = M.getDeltaV();    // Delta Velocity pre-integration measurement
+        Vector3d dPij = M.getDeltaP(); // Delta Position pre-integration measurement
+        Vector3d dVij = M.getDeltaV(); // Delta Velocity pre-integration measurement
         Sophus::SO3d dRij = Sophus::SO3(M.getDeltaR());
 
         // tmp variable, transpose of Ri
         Sophus::SO3d RiT = Ri.inverse();
         // residual error of Delta Position measurement
-        Vector3d rPij = RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2)
-                        - (dPij + M.getJPBiasg() * dBgi +
-                           M.getJPBiasa() * dBai);   // this line includes correction term of bias change.
+        Vector3d rPij = RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2) - (dPij + M.getJPBiasg() * dBgi +
+                                                                                M.getJPBiasa() * dBai); // this line includes correction term of bias change.
         // residual error of Delta Velocity measurement
-        Vector3d rVij = RiT * (Vj - Vi - GravityVec * dTij)
-                        - (dVij + M.getJVBiasg() * dBgi +
-                           M.getJVBiasa() * dBai);   //this line includes correction term of bias change
+        Vector3d rVij = RiT * (Vj - Vi - GravityVec * dTij) - (dVij + M.getJVBiasg() * dBgi +
+                                                               M.getJVBiasa() * dBai); // this line includes correction term of bias change
         // residual error of Delta Rotation measurement
         Sophus::SO3d dR_dbg = Sophus::SO3d::exp(M.getJRBiasg() * dBgi);
         Sophus::SO3d rRij = (dRij * dR_dbg).inverse() * RiT * Rj;
         Vector3d rPhiij = rRij.log();
 
         // residual error of Gyroscope's bias, Forster 15'RSS
-        Vector3d rBiasG = (NSj.Get_BiasGyr() + NSj.Get_dBias_Gyr())
-                          - (NSi.Get_BiasGyr() + NSi.Get_dBias_Gyr());
+        Vector3d rBiasG = (NSj.Get_BiasGyr() + NSj.Get_dBias_Gyr()) - (NSi.Get_BiasGyr() + NSi.Get_dBias_Gyr());
 
         // residual error of Accelerometer's bias, Forster 15'RSS
-        Vector3d rBiasA = (NSj.Get_BiasAcc() + NSj.Get_dBias_Acc())
-                          - (NSi.Get_BiasAcc() + NSi.Get_dBias_Acc());
+        Vector3d rBiasA = (NSj.Get_BiasAcc() + NSj.Get_dBias_Acc()) - (NSi.Get_BiasAcc() + NSi.Get_dBias_Acc());
 
-        Vector15d err;  // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=15
+        Vector15d err; // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=15
         err.setZero();
         // 15-Dim error vector order:
         // position-velocity-rotation-deltabiasGyr_i-deltabiasAcc_i
         // rPij - rVij - rPhiij - rBiasGi - rBiasAi
-        err.segment<3>(0) = rPij;       // position error
-        err.segment<3>(3) = rVij;       // velocity error
-        err.segment<3>(6) = rPhiij;     // rotation phi error
-        err.segment<3>(9) = rBiasG;     // bias gyro error
-        err.segment<3>(12) = rBiasA;    // bias acc error
+        err.segment<3>(0) = rPij;    // position error
+        err.segment<3>(3) = rVij;    // velocity error
+        err.segment<3>(6) = rPhiij;  // rotation phi error
+        err.segment<3>(9) = rBiasG;  // bias gyro error
+        err.segment<3>(12) = rBiasA; // bias acc error
 
         _error = err;
     }
 
-    void EdgeNavStateGw::linearizeOplus() {
+    void EdgeNavStateGw::linearizeOplus()
+    {
         const VertexNavState *vi = static_cast<const VertexNavState *>(_vertices[0]);
         const VertexNavState *vj = static_cast<const VertexNavState *>(_vertices[1]);
         const VertexGravityW *vg = static_cast<const VertexGravityW *>(_vertices[2]);
 
         Vector3d GravityVec = vg->estimate();
-
 
         // terms need to computer error in vertex i, except for bias error
         const NavState &NSi = vi->estimate();
@@ -553,17 +556,17 @@ namespace g2o {
 
         // IMU Preintegration measurement
         const IMUPreintegrator &M = _measurement;
-        double dTij = M.getDeltaTime();   // Delta Time
+        double dTij = M.getDeltaTime(); // Delta Time
         double dT2 = dTij * dTij;
 
         // some temp variable
-        Matrix3d I3x3 = Matrix3d::Identity();   // I_3x3
-        Matrix3d O3x3 = Matrix3d::Zero();       // 0_3x3
-        Matrix3d RiT = Ri.transpose();          // Ri^T
-        Matrix3d RjT = Rj.transpose();          // Rj^T
-        Vector3d rPhiij = _error.segment<3>(6); // residual of rotation, rPhiij
-        Matrix3d JrInv_rPhi = Sophus::SO3::JacobianRInv(rPhiij);    // inverse right jacobian of so3 term #rPhiij#
-        Matrix3d J_rPhi_dbg = M.getJRBiasg();              // jacobian of preintegrated rotation-angle to gyro bias i
+        Matrix3d I3x3 = Matrix3d::Identity();                    // I_3x3
+        Matrix3d O3x3 = Matrix3d::Zero();                        // 0_3x3
+        Matrix3d RiT = Ri.transpose();                           // Ri^T
+        Matrix3d RjT = Rj.transpose();                           // Rj^T
+        Vector3d rPhiij = _error.segment<3>(6);                  // residual of rotation, rPhiij
+        Matrix3d JrInv_rPhi = Sophus::SO3::JacobianRInv(rPhiij); // inverse right jacobian of so3 term #rPhiij#
+        Matrix3d J_rPhi_dbg = M.getJRBiasg();                    // jacobian of preintegrated rotation-angle to gyro bias i
 
         // 1.
         // increment is the same as Forster 15'RSS
@@ -600,46 +603,46 @@ namespace g2o {
 
         // 4.1
         // J_rPij_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(0, 0) = -I3x3;      //J_rP_dpi
-        _jacobianOplusXi.block<3, 3>(0, 3) = -RiT * dTij;  //J_rP_dvi
+        _jacobianOplusXi.block<3, 3>(0, 0) = -I3x3;       // J_rP_dpi
+        _jacobianOplusXi.block<3, 3>(0, 3) = -RiT * dTij; // J_rP_dvi
         _jacobianOplusXi.block<3, 3>(0, 6) = Sophus::SO3::hat(
-                RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2));    //J_rP_dPhi_i
-        _jacobianOplusXi.block<3, 3>(0, 9) = -M.getJPBiasg();     //J_rP_dbgi
-        _jacobianOplusXi.block<3, 3>(0, 12) = -M.getJPBiasa();     //J_rP_dbai
+            RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2)); // J_rP_dPhi_i
+        _jacobianOplusXi.block<3, 3>(0, 9) = -M.getJPBiasg();      // J_rP_dbgi
+        _jacobianOplusXi.block<3, 3>(0, 12) = -M.getJPBiasa();     // J_rP_dbai
 
         // 4.2
         // J_rVij_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(3, 0) = O3x3;    //dpi
-        _jacobianOplusXi.block<3, 3>(3, 3) = -RiT;    //dvi
-        _jacobianOplusXi.block<3, 3>(3, 6) = Sophus::SO3::hat(RiT * (Vj - Vi - GravityVec * dTij));    //dphi_i
-        _jacobianOplusXi.block<3, 3>(3, 9) = -M.getJVBiasg();    //dbg_i
-        _jacobianOplusXi.block<3, 3>(3, 12) = -M.getJVBiasa();    //dba_i
+        _jacobianOplusXi.block<3, 3>(3, 0) = O3x3;                                                  // dpi
+        _jacobianOplusXi.block<3, 3>(3, 3) = -RiT;                                                  // dvi
+        _jacobianOplusXi.block<3, 3>(3, 6) = Sophus::SO3::hat(RiT * (Vj - Vi - GravityVec * dTij)); // dphi_i
+        _jacobianOplusXi.block<3, 3>(3, 9) = -M.getJVBiasg();                                       // dbg_i
+        _jacobianOplusXi.block<3, 3>(3, 12) = -M.getJVBiasa();                                      // dba_i
 
         // 4.3
         // J_rPhiij_xxx_i for Vertex_i
         Matrix3d ExprPhiijTrans = Sophus::SO3::exp(rPhiij).inverse().matrix();
         Matrix3d JrBiasGCorr = Sophus::SO3::JacobianR(J_rPhi_dbg * dBgi);
-        _jacobianOplusXi.block<3, 3>(6, 0) = O3x3;    //dpi
-        _jacobianOplusXi.block<3, 3>(6, 3) = O3x3;    //dvi
-        _jacobianOplusXi.block<3, 3>(6, 6) = -JrInv_rPhi * RjT * Ri;    //dphi_i
-        _jacobianOplusXi.block<3, 3>(6, 9) = -JrInv_rPhi * ExprPhiijTrans * JrBiasGCorr * J_rPhi_dbg;    //dbg_i
-        _jacobianOplusXi.block<3, 3>(6, 12) = O3x3;    //dba_i
+        _jacobianOplusXi.block<3, 3>(6, 0) = O3x3;                                                    // dpi
+        _jacobianOplusXi.block<3, 3>(6, 3) = O3x3;                                                    // dvi
+        _jacobianOplusXi.block<3, 3>(6, 6) = -JrInv_rPhi * RjT * Ri;                                  // dphi_i
+        _jacobianOplusXi.block<3, 3>(6, 9) = -JrInv_rPhi * ExprPhiijTrans * JrBiasGCorr * J_rPhi_dbg; // dbg_i
+        _jacobianOplusXi.block<3, 3>(6, 12) = O3x3;                                                   // dba_i
 
         // 4.4
         // J_rBiasGi_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(9, 0) = O3x3;    //dpi
-        _jacobianOplusXi.block<3, 3>(9, 3) = O3x3;    //dvi
-        _jacobianOplusXi.block<3, 3>(9, 6) = O3x3;    //dphi_i
-        _jacobianOplusXi.block<3, 3>(9, 9) = -I3x3;    //dbg_i
-        _jacobianOplusXi.block<3, 3>(9, 12) = O3x3;    //dba_i
+        _jacobianOplusXi.block<3, 3>(9, 0) = O3x3;  // dpi
+        _jacobianOplusXi.block<3, 3>(9, 3) = O3x3;  // dvi
+        _jacobianOplusXi.block<3, 3>(9, 6) = O3x3;  // dphi_i
+        _jacobianOplusXi.block<3, 3>(9, 9) = -I3x3; // dbg_i
+        _jacobianOplusXi.block<3, 3>(9, 12) = O3x3; // dba_i
 
         // 4.5
         // J_rBiasAi_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(12, 0) = O3x3;     //dpi
-        _jacobianOplusXi.block<3, 3>(12, 3) = O3x3;     //dvi
-        _jacobianOplusXi.block<3, 3>(12, 6) = O3x3;     //dphi_i
-        _jacobianOplusXi.block<3, 3>(12, 9) = O3x3;    //dbg_i
-        _jacobianOplusXi.block<3, 3>(12, 12) = -I3x3;     //dba_i
+        _jacobianOplusXi.block<3, 3>(12, 0) = O3x3;   // dpi
+        _jacobianOplusXi.block<3, 3>(12, 3) = O3x3;   // dvi
+        _jacobianOplusXi.block<3, 3>(12, 6) = O3x3;   // dphi_i
+        _jacobianOplusXi.block<3, 3>(12, 9) = O3x3;   // dbg_i
+        _jacobianOplusXi.block<3, 3>(12, 12) = -I3x3; // dba_i
 
         // 5.
         // For Vertex_j
@@ -648,55 +651,54 @@ namespace g2o {
 
         // 5.1
         // J_rPij_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(0, 0) = RiT * Rj;  //dpj
-        _jacobianOplusXj.block<3, 3>(0, 3) = O3x3;    //dvj
-        _jacobianOplusXj.block<3, 3>(0, 6) = O3x3;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(0, 9) = O3x3;    //dbg_j, all zero
-        _jacobianOplusXj.block<3, 3>(0, 12) = O3x3;    //dba_j, all zero
+        _jacobianOplusXj.block<3, 3>(0, 0) = RiT * Rj; // dpj
+        _jacobianOplusXj.block<3, 3>(0, 3) = O3x3;     // dvj
+        _jacobianOplusXj.block<3, 3>(0, 6) = O3x3;     // dphi_j
+        _jacobianOplusXj.block<3, 3>(0, 9) = O3x3;     // dbg_j, all zero
+        _jacobianOplusXj.block<3, 3>(0, 12) = O3x3;    // dba_j, all zero
 
         // 5.2
         // J_rVij_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(3, 0) = O3x3;    //dpj
-        _jacobianOplusXj.block<3, 3>(3, 3) = RiT;    //dvj
-        _jacobianOplusXj.block<3, 3>(3, 6) = O3x3;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(3, 9) = O3x3;    //dbg_j, all zero
-        _jacobianOplusXj.block<3, 3>(3, 12) = O3x3;    //dba_j, all zero
+        _jacobianOplusXj.block<3, 3>(3, 0) = O3x3;  // dpj
+        _jacobianOplusXj.block<3, 3>(3, 3) = RiT;   // dvj
+        _jacobianOplusXj.block<3, 3>(3, 6) = O3x3;  // dphi_j
+        _jacobianOplusXj.block<3, 3>(3, 9) = O3x3;  // dbg_j, all zero
+        _jacobianOplusXj.block<3, 3>(3, 12) = O3x3; // dba_j, all zero
 
         // 5.3
         // J_rPhiij_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(6, 0) = O3x3;    //dpj
-        _jacobianOplusXj.block<3, 3>(6, 3) = O3x3;    //dvj
-        _jacobianOplusXj.block<3, 3>(6, 6) = JrInv_rPhi;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(6, 9) = O3x3;    //dbg_j, all zero
-        _jacobianOplusXj.block<3, 3>(6, 12) = O3x3;    //dba_j, all zero
+        _jacobianOplusXj.block<3, 3>(6, 0) = O3x3;       // dpj
+        _jacobianOplusXj.block<3, 3>(6, 3) = O3x3;       // dvj
+        _jacobianOplusXj.block<3, 3>(6, 6) = JrInv_rPhi; // dphi_j
+        _jacobianOplusXj.block<3, 3>(6, 9) = O3x3;       // dbg_j, all zero
+        _jacobianOplusXj.block<3, 3>(6, 12) = O3x3;      // dba_j, all zero
 
         // 5.4
         // J_rBiasGi_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(9, 0) = O3x3;     //dpj
-        _jacobianOplusXj.block<3, 3>(9, 3) = O3x3;     //dvj
-        _jacobianOplusXj.block<3, 3>(9, 6) = O3x3;     //dphi_j
-        _jacobianOplusXj.block<3, 3>(9, 9) = I3x3;    //dbg_j
-        _jacobianOplusXj.block<3, 3>(9, 12) = O3x3;     //dba_j
+        _jacobianOplusXj.block<3, 3>(9, 0) = O3x3;  // dpj
+        _jacobianOplusXj.block<3, 3>(9, 3) = O3x3;  // dvj
+        _jacobianOplusXj.block<3, 3>(9, 6) = O3x3;  // dphi_j
+        _jacobianOplusXj.block<3, 3>(9, 9) = I3x3;  // dbg_j
+        _jacobianOplusXj.block<3, 3>(9, 12) = O3x3; // dba_j
 
         // 5.5
         // J_rBiasAi_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(12, 0) = O3x3;    //dpj
-        _jacobianOplusXj.block<3, 3>(12, 3) = O3x3;    //dvj
-        _jacobianOplusXj.block<3, 3>(12, 6) = O3x3;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(12, 9) = O3x3;    //dbg_j
-        _jacobianOplusXj.block<3, 3>(12, 12) = I3x3;    //dba_j
-
+        _jacobianOplusXj.block<3, 3>(12, 0) = O3x3;  // dpj
+        _jacobianOplusXj.block<3, 3>(12, 3) = O3x3;  // dvj
+        _jacobianOplusXj.block<3, 3>(12, 6) = O3x3;  // dphi_j
+        _jacobianOplusXj.block<3, 3>(12, 9) = O3x3;  // dbg_j
+        _jacobianOplusXj.block<3, 3>(12, 12) = I3x3; // dba_j
 
         // Gravity in world
         Matrix<double, 15, 2> Jgw;
         Jgw.setZero();
         Matrix3d GwHat = Sophus::SO3::hat(GravityVec);
 
-        Jgw.block<3, 2>(0, 0) = RiT * 0.5 * dT2 * GwHat.block<3, 2>(0, 0); //rPij
-        Jgw.block<3, 2>(3, 0) = RiT * dTij * GwHat.block<3, 2>(0, 0); //rVij
-        //Jgw.block<3,2>(3,0) = ; //rRij
-        //Jgw.block<3,2>(3,0) = 0; //rBg
-        //Jgw.block<3,2>(3,0) = 0; //rBa
+        Jgw.block<3, 2>(0, 0) = RiT * 0.5 * dT2 * GwHat.block<3, 2>(0, 0); // rPij
+        Jgw.block<3, 2>(3, 0) = RiT * dTij * GwHat.block<3, 2>(0, 0);      // rVij
+        // Jgw.block<3,2>(3,0) = ; //rRij
+        // Jgw.block<3,2>(3,0) = 0; //rBg
+        // Jgw.block<3,2>(3,0) = 0; //rBa
 
         // evaluate
         _jacobianOplus[0] = _jacobianOplusXi;
@@ -704,19 +706,20 @@ namespace g2o {
         _jacobianOplus[2] = Jgw;
     }
 
-
-/**
- * @brief VertexNavState::VertexNavState
- */
-    VertexNavState::VertexNavState() : BaseVertex<15, NavState>() {
+    /**
+     * @brief VertexNavState::VertexNavState
+     */
+    VertexNavState::VertexNavState() : BaseVertex<15, NavState>()
+    {
     }
 
-// Todo
+    // TODO:
     bool VertexNavState::read(std::istream &is) { return true; }
 
     bool VertexNavState::write(std::ostream &os) const { return true; }
 
-    void VertexNavState::oplusImpl(const double *update_) {
+    void VertexNavState::oplusImpl(const double *update_)
+    {
         // 1.
         // order in 'update_'
         // dP, dV, dPhi, dBiasGyr, dBiasAcc
@@ -733,25 +736,27 @@ namespace g2o {
         Eigen::Map<const Vector15d> update(update_);
         _estimate.IncSmall(update);
 
-        //std::cout<<"id "<<id()<<" ns update: "<<update.transpose()<<std::endl;
+        // std::cout<<"id "<<id()<<" ns update: "<<update.transpose()<<std::endl;
     }
 
-/**
- * @brief EdgeNavState::EdgeNavState
- */
-    EdgeNavState::EdgeNavState() : BaseBinaryEdge<15, IMUPreintegrator, VertexNavState, VertexNavState>() {
+    /**
+     * @brief EdgeNavState::EdgeNavState
+     */
+    EdgeNavState::EdgeNavState() : BaseBinaryEdge<15, IMUPreintegrator, VertexNavState, VertexNavState>()
+    {
     }
 
-// Todo
+    // TODO:
     bool EdgeNavState::read(std::istream &is) { return true; }
 
     bool EdgeNavState::write(std::ostream &os) const { return true; }
 
-/**
- * @brief EdgeNavState::computeError
- * In g2o, computeError() is called in computeActiveErrors(), before buildSystem()
- */
-    void EdgeNavState::computeError() {
+    /**
+     * @brief EdgeNavState::computeError
+     * In g2o, computeError() is called in computeActiveErrors(), before buildSystem()
+     */
+    void EdgeNavState::computeError()
+    {
         const VertexNavState *vi = static_cast<const VertexNavState *>(_vertices[0]);
         const VertexNavState *vj = static_cast<const VertexNavState *>(_vertices[1]);
 
@@ -771,66 +776,63 @@ namespace g2o {
 
         // IMU Preintegration measurement
         const IMUPreintegrator &M = _measurement;
-        double dTij = M.getDeltaTime();   // Delta Time
+        double dTij = M.getDeltaTime(); // Delta Time
         double dT2 = dTij * dTij;
-        Vector3d dPij = M.getDeltaP();    // Delta Position pre-integration measurement
-        Vector3d dVij = M.getDeltaV();    // Delta Velocity pre-integration measurement
+        Vector3d dPij = M.getDeltaP(); // Delta Position pre-integration measurement
+        Vector3d dVij = M.getDeltaV(); // Delta Velocity pre-integration measurement
         Sophus::SO3d dRij = Sophus::SO3d(M.getDeltaR());
 
         // tmp variable, transpose of Ri
-        //Matrix3d RiT = Ri.transpose();
+        // Matrix3d RiT = Ri.transpose();
         Sophus::SO3d RiT = Ri.inverse();
         // residual error of Delta Position measurement
-        Vector3d rPij = RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2)
-                        - (dPij + M.getJPBiasg() * dBgi +
-                           M.getJPBiasa() * dBai);   // this line includes correction term of bias change.
+        Vector3d rPij = RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2) - (dPij + M.getJPBiasg() * dBgi +
+                                                                                M.getJPBiasa() * dBai); // this line includes correction term of bias change.
         // residual error of Delta Velocity measurement
-        Vector3d rVij = RiT * (Vj - Vi - GravityVec * dTij)
-                        - (dVij + M.getJVBiasg() * dBgi +
-                           M.getJVBiasa() * dBai);   //this line includes correction term of bias change
+        Vector3d rVij = RiT * (Vj - Vi - GravityVec * dTij) - (dVij + M.getJVBiasg() * dBgi +
+                                                               M.getJVBiasa() * dBai); // this line includes correction term of bias change
         // residual error of Delta Rotation measurement
         Sophus::SO3d dR_dbg = Sophus::SO3d::exp(M.getJRBiasg() * dBgi);
         Sophus::SO3d rRij = (dRij * dR_dbg).inverse() * RiT * Rj;
         Vector3d rPhiij = rRij.log();
 
         // residual error of Gyroscope's bias, Forster 15'RSS
-        Vector3d rBiasG = (NSj.Get_BiasGyr() + NSj.Get_dBias_Gyr())
-                          - (NSi.Get_BiasGyr() + NSi.Get_dBias_Gyr());
+        Vector3d rBiasG = (NSj.Get_BiasGyr() + NSj.Get_dBias_Gyr()) - (NSi.Get_BiasGyr() + NSi.Get_dBias_Gyr());
 
         // residual error of Accelerometer's bias, Forster 15'RSS
-        Vector3d rBiasA = (NSj.Get_BiasAcc() + NSj.Get_dBias_Acc())
-                          - (NSi.Get_BiasAcc() + NSi.Get_dBias_Acc());
+        Vector3d rBiasA = (NSj.Get_BiasAcc() + NSj.Get_dBias_Acc()) - (NSi.Get_BiasAcc() + NSi.Get_dBias_Acc());
 
-        Vector15d err;  // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=15
+        Vector15d err; // typedef Matrix<double, D, 1> ErrorVector; ErrorVector _error; D=15
         err.setZero();
         // 15-Dim error vector order:
         // position-velocity-rotation-deltabiasGyr_i-deltabiasAcc_i
         // rPij - rVij - rPhiij - rBiasGi - rBiasAi
-        err.segment<3>(0) = rPij;       // position error
-        err.segment<3>(3) = rVij;       // velocity error
-        err.segment<3>(6) = rPhiij;     // rotation phi error
-        err.segment<3>(9) = rBiasG;     // bias gyro error
-        err.segment<3>(12) = rBiasA;    // bias acc error
+        err.segment<3>(0) = rPij;    // position error
+        err.segment<3>(3) = rVij;    // velocity error
+        err.segment<3>(6) = rPhiij;  // rotation phi error
+        err.segment<3>(9) = rBiasG;  // bias gyro error
+        err.segment<3>(12) = rBiasA; // bias acc error
 
         _error = err;
     }
 
-/**
- * @brief EdgeNavState::linearizeOplus
- * In g2o, linearizeOplus() is called in buildSystem(), after computeError()
- * So variable #_error# is computed and can be used here
- *
- * Reference:
- * [1]  Supplementary Material to :
- *      IMU Preintegration on Manifold for E cient Visual-Inertial Maximum-a-Posteriori Estimation IMU Preintegration
- *      Technical Report GT-IRIM-CP&R-2015-001
- *      Christian Forster, Luca Carlone, Frank Dellaert, and Davide Scaramuzza
- *      May 30, 2015
- * [2]  IMU Preintegration on Manifold for Efficient Visual-Inertial Maximum-a-Posteriori Estimation
- *      Christian Forster, Luca Carlone, Frank Dellaert, and Davide Scaramuzza
- *      RSS, 2015
- */
-    void EdgeNavState::linearizeOplus() {
+    /**
+     * @brief EdgeNavState::linearizeOplus
+     * In g2o, linearizeOplus() is called in buildSystem(), after computeError()
+     * So variable #_error# is computed and can be used here
+     *
+     * Reference:
+     * [1]  Supplementary Material to :
+     *      IMU Preintegration on Manifold for E cient Visual-Inertial Maximum-a-Posteriori Estimation IMU Preintegration
+     *      Technical Report GT-IRIM-CP&R-2015-001
+     *      Christian Forster, Luca Carlone, Frank Dellaert, and Davide Scaramuzza
+     *      May 30, 2015
+     * [2]  IMU Preintegration on Manifold for Efficient Visual-Inertial Maximum-a-Posteriori Estimation
+     *      Christian Forster, Luca Carlone, Frank Dellaert, and Davide Scaramuzza
+     *      RSS, 2015
+     */
+    void EdgeNavState::linearizeOplus()
+    {
         const VertexNavState *vi = static_cast<const VertexNavState *>(_vertices[0]);
         const VertexNavState *vj = static_cast<const VertexNavState *>(_vertices[1]);
 
@@ -849,17 +851,17 @@ namespace g2o {
 
         // IMU Preintegration measurement
         const IMUPreintegrator &M = _measurement;
-        double dTij = M.getDeltaTime();   // Delta Time
+        double dTij = M.getDeltaTime(); // Delta Time
         double dT2 = dTij * dTij;
 
         // some temp variable
-        Matrix3d I3x3 = Matrix3d::Identity();   // I_3x3
-        Matrix3d O3x3 = Matrix3d::Zero();       // 0_3x3
-        Matrix3d RiT = Ri.transpose();          // Ri^T
-        Matrix3d RjT = Rj.transpose();          // Rj^T
-        Vector3d rPhiij = _error.segment<3>(6); // residual of rotation, rPhiij
-        Matrix3d JrInv_rPhi = Sophus::SO3::JacobianRInv(rPhiij);    // inverse right jacobian of so3 term #rPhiij#
-        Matrix3d J_rPhi_dbg = M.getJRBiasg();              // jacobian of preintegrated rotation-angle to gyro bias i
+        Matrix3d I3x3 = Matrix3d::Identity();                    // I_3x3
+        Matrix3d O3x3 = Matrix3d::Zero();                        // 0_3x3
+        Matrix3d RiT = Ri.transpose();                           // Ri^T
+        Matrix3d RjT = Rj.transpose();                           // Rj^T
+        Vector3d rPhiij = _error.segment<3>(6);                  // residual of rotation, rPhiij
+        Matrix3d JrInv_rPhi = Sophus::SO3::JacobianRInv(rPhiij); // inverse right jacobian of so3 term #rPhiij#
+        Matrix3d J_rPhi_dbg = M.getJRBiasg();                    // jacobian of preintegrated rotation-angle to gyro bias i
 
         // 1.
         // increment is the same as Forster 15'RSS
@@ -895,46 +897,46 @@ namespace g2o {
 
         // 4.1
         // J_rPij_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(0, 0) = -I3x3;      //J_rP_dpi
-        _jacobianOplusXi.block<3, 3>(0, 3) = -RiT * dTij;  //J_rP_dvi
+        _jacobianOplusXi.block<3, 3>(0, 0) = -I3x3;       // J_rP_dpi
+        _jacobianOplusXi.block<3, 3>(0, 3) = -RiT * dTij; // J_rP_dvi
         _jacobianOplusXi.block<3, 3>(0, 6) = Sophus::SO3::hat(
-                RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2));    //J_rP_dPhi_i
-        _jacobianOplusXi.block<3, 3>(0, 9) = -M.getJPBiasg();     //J_rP_dbgi
-        _jacobianOplusXi.block<3, 3>(0, 12) = -M.getJPBiasa();     //J_rP_dbai
+            RiT * (Pj - Pi - Vi * dTij - 0.5 * GravityVec * dT2)); // J_rP_dPhi_i
+        _jacobianOplusXi.block<3, 3>(0, 9) = -M.getJPBiasg();      // J_rP_dbgi
+        _jacobianOplusXi.block<3, 3>(0, 12) = -M.getJPBiasa();     // J_rP_dbai
 
         // 4.2
         // J_rVij_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(3, 0) = O3x3;    //dpi
-        _jacobianOplusXi.block<3, 3>(3, 3) = -RiT;    //dvi
-        _jacobianOplusXi.block<3, 3>(3, 6) = Sophus::SO3::hat(RiT * (Vj - Vi - GravityVec * dTij));    //dphi_i
-        _jacobianOplusXi.block<3, 3>(3, 9) = -M.getJVBiasg();    //dbg_i
-        _jacobianOplusXi.block<3, 3>(3, 12) = -M.getJVBiasa();    //dba_i
+        _jacobianOplusXi.block<3, 3>(3, 0) = O3x3;                                                  // dpi
+        _jacobianOplusXi.block<3, 3>(3, 3) = -RiT;                                                  // dvi
+        _jacobianOplusXi.block<3, 3>(3, 6) = Sophus::SO3::hat(RiT * (Vj - Vi - GravityVec * dTij)); // dphi_i
+        _jacobianOplusXi.block<3, 3>(3, 9) = -M.getJVBiasg();                                       // dbg_i
+        _jacobianOplusXi.block<3, 3>(3, 12) = -M.getJVBiasa();                                      // dba_i
 
         // 4.3
         // J_rPhiij_xxx_i for Vertex_i
         Matrix3d ExprPhiijTrans = Sophus::SO3::exp(rPhiij).inverse().matrix();
         Matrix3d JrBiasGCorr = Sophus::SO3::JacobianR(J_rPhi_dbg * dBgi);
-        _jacobianOplusXi.block<3, 3>(6, 0) = O3x3;    //dpi
-        _jacobianOplusXi.block<3, 3>(6, 3) = O3x3;    //dvi
-        _jacobianOplusXi.block<3, 3>(6, 6) = -JrInv_rPhi * RjT * Ri;    //dphi_i
-        _jacobianOplusXi.block<3, 3>(6, 9) = -JrInv_rPhi * ExprPhiijTrans * JrBiasGCorr * J_rPhi_dbg;    //dbg_i
-        _jacobianOplusXi.block<3, 3>(6, 12) = O3x3;    //dba_i
+        _jacobianOplusXi.block<3, 3>(6, 0) = O3x3;                                                    // dpi
+        _jacobianOplusXi.block<3, 3>(6, 3) = O3x3;                                                    // dvi
+        _jacobianOplusXi.block<3, 3>(6, 6) = -JrInv_rPhi * RjT * Ri;                                  // dphi_i
+        _jacobianOplusXi.block<3, 3>(6, 9) = -JrInv_rPhi * ExprPhiijTrans * JrBiasGCorr * J_rPhi_dbg; // dbg_i
+        _jacobianOplusXi.block<3, 3>(6, 12) = O3x3;                                                   // dba_i
 
         // 4.4
         // J_rBiasGi_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(9, 0) = O3x3;    //dpi
-        _jacobianOplusXi.block<3, 3>(9, 3) = O3x3;    //dvi
-        _jacobianOplusXi.block<3, 3>(9, 6) = O3x3;    //dphi_i
-        _jacobianOplusXi.block<3, 3>(9, 9) = -I3x3;    //dbg_i
-        _jacobianOplusXi.block<3, 3>(9, 12) = O3x3;    //dba_i
+        _jacobianOplusXi.block<3, 3>(9, 0) = O3x3;  // dpi
+        _jacobianOplusXi.block<3, 3>(9, 3) = O3x3;  // dvi
+        _jacobianOplusXi.block<3, 3>(9, 6) = O3x3;  // dphi_i
+        _jacobianOplusXi.block<3, 3>(9, 9) = -I3x3; // dbg_i
+        _jacobianOplusXi.block<3, 3>(9, 12) = O3x3; // dba_i
 
         // 4.5
         // J_rBiasAi_xxx_i for Vertex_i
-        _jacobianOplusXi.block<3, 3>(12, 0) = O3x3;     //dpi
-        _jacobianOplusXi.block<3, 3>(12, 3) = O3x3;     //dvi
-        _jacobianOplusXi.block<3, 3>(12, 6) = O3x3;     //dphi_i
-        _jacobianOplusXi.block<3, 3>(12, 9) = O3x3;    //dbg_i
-        _jacobianOplusXi.block<3, 3>(12, 12) = -I3x3;     //dba_i
+        _jacobianOplusXi.block<3, 3>(12, 0) = O3x3;   // dpi
+        _jacobianOplusXi.block<3, 3>(12, 3) = O3x3;   // dvi
+        _jacobianOplusXi.block<3, 3>(12, 6) = O3x3;   // dphi_i
+        _jacobianOplusXi.block<3, 3>(12, 9) = O3x3;   // dbg_i
+        _jacobianOplusXi.block<3, 3>(12, 12) = -I3x3; // dba_i
 
         // 5.
         // For Vertex_j
@@ -942,58 +944,59 @@ namespace g2o {
 
         // 5.1
         // J_rPij_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(0, 0) = RiT * Rj;  //dpj
-        _jacobianOplusXj.block<3, 3>(0, 3) = O3x3;    //dvj
-        _jacobianOplusXj.block<3, 3>(0, 6) = O3x3;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(0, 9) = O3x3;    //dbg_j, all zero
-        _jacobianOplusXj.block<3, 3>(0, 12) = O3x3;    //dba_j, all zero
+        _jacobianOplusXj.block<3, 3>(0, 0) = RiT * Rj; // dpj
+        _jacobianOplusXj.block<3, 3>(0, 3) = O3x3;     // dvj
+        _jacobianOplusXj.block<3, 3>(0, 6) = O3x3;     // dphi_j
+        _jacobianOplusXj.block<3, 3>(0, 9) = O3x3;     // dbg_j, all zero
+        _jacobianOplusXj.block<3, 3>(0, 12) = O3x3;    // dba_j, all zero
 
         // 5.2
         // J_rVij_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(3, 0) = O3x3;    //dpj
-        _jacobianOplusXj.block<3, 3>(3, 3) = RiT;    //dvj
-        _jacobianOplusXj.block<3, 3>(3, 6) = O3x3;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(3, 9) = O3x3;    //dbg_j, all zero
-        _jacobianOplusXj.block<3, 3>(3, 12) = O3x3;    //dba_j, all zero
+        _jacobianOplusXj.block<3, 3>(3, 0) = O3x3;  // dpj
+        _jacobianOplusXj.block<3, 3>(3, 3) = RiT;   // dvj
+        _jacobianOplusXj.block<3, 3>(3, 6) = O3x3;  // dphi_j
+        _jacobianOplusXj.block<3, 3>(3, 9) = O3x3;  // dbg_j, all zero
+        _jacobianOplusXj.block<3, 3>(3, 12) = O3x3; // dba_j, all zero
 
         // 5.3
         // J_rPhiij_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(6, 0) = O3x3;    //dpj
-        _jacobianOplusXj.block<3, 3>(6, 3) = O3x3;    //dvj
-        _jacobianOplusXj.block<3, 3>(6, 6) = JrInv_rPhi;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(6, 9) = O3x3;    //dbg_j, all zero
-        _jacobianOplusXj.block<3, 3>(6, 12) = O3x3;    //dba_j, all zero
+        _jacobianOplusXj.block<3, 3>(6, 0) = O3x3;       // dpj
+        _jacobianOplusXj.block<3, 3>(6, 3) = O3x3;       // dvj
+        _jacobianOplusXj.block<3, 3>(6, 6) = JrInv_rPhi; // dphi_j
+        _jacobianOplusXj.block<3, 3>(6, 9) = O3x3;       // dbg_j, all zero
+        _jacobianOplusXj.block<3, 3>(6, 12) = O3x3;      // dba_j, all zero
 
         // 5.4
         // J_rBiasGi_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(9, 0) = O3x3;     //dpj
-        _jacobianOplusXj.block<3, 3>(9, 3) = O3x3;     //dvj
-        _jacobianOplusXj.block<3, 3>(9, 6) = O3x3;     //dphi_j
-        _jacobianOplusXj.block<3, 3>(9, 9) = I3x3;    //dbg_j
-        _jacobianOplusXj.block<3, 3>(9, 12) = O3x3;     //dba_j
+        _jacobianOplusXj.block<3, 3>(9, 0) = O3x3;  // dpj
+        _jacobianOplusXj.block<3, 3>(9, 3) = O3x3;  // dvj
+        _jacobianOplusXj.block<3, 3>(9, 6) = O3x3;  // dphi_j
+        _jacobianOplusXj.block<3, 3>(9, 9) = I3x3;  // dbg_j
+        _jacobianOplusXj.block<3, 3>(9, 12) = O3x3; // dba_j
 
         // 5.5
         // J_rBiasAi_xxx_j for Vertex_j
-        _jacobianOplusXj.block<3, 3>(12, 0) = O3x3;    //dpj
-        _jacobianOplusXj.block<3, 3>(12, 3) = O3x3;    //dvj
-        _jacobianOplusXj.block<3, 3>(12, 6) = O3x3;    //dphi_j
-        _jacobianOplusXj.block<3, 3>(12, 9) = O3x3;    //dbg_j
-        _jacobianOplusXj.block<3, 3>(12, 12) = I3x3;    //dba_j
-
+        _jacobianOplusXj.block<3, 3>(12, 0) = O3x3;  // dpj
+        _jacobianOplusXj.block<3, 3>(12, 3) = O3x3;  // dvj
+        _jacobianOplusXj.block<3, 3>(12, 6) = O3x3;  // dphi_j
+        _jacobianOplusXj.block<3, 3>(12, 9) = O3x3;  // dbg_j
+        _jacobianOplusXj.block<3, 3>(12, 12) = I3x3; // dba_j
     }
 
-/**
- * @brief EdgeNavStatePointXYZ::EdgeNavStatePointXYZ
- */
-    EdgeNavStatePointXYZ::EdgeNavStatePointXYZ() : BaseBinaryEdge<2, Vector2d, VertexSBAPointXYZ, VertexNavState>() {
+    /**
+     * @brief EdgeNavStatePointXYZ::EdgeNavStatePointXYZ
+     */
+    EdgeNavStatePointXYZ::EdgeNavStatePointXYZ() : BaseBinaryEdge<2, Vector2d, VertexSBAPointXYZ, VertexNavState>()
+    {
     }
 
-// Todo
+    // TODO:
     bool EdgeNavStatePointXYZ::read(std::istream &is) { return true; }
 
     bool EdgeNavStatePointXYZ::write(std::ostream &os) const { return true; }
 
-    void EdgeNavStatePointXYZ::linearizeOplus() {
+    void EdgeNavStatePointXYZ::linearizeOplus()
+    {
         const VertexSBAPointXYZ *vPoint = static_cast<const VertexSBAPointXYZ *>(_vertices[0]);
         const VertexNavState *vNavState = static_cast<const VertexNavState *>(_vertices[1]);
 
@@ -1029,7 +1032,7 @@ namespace g2o {
         _jacobianOplusXi = -Jpi * Rcb * Rwb.transpose();
 
         // Jacobian of Pc/error w.r.t dPwb
-        //Matrix3d J_Pc_dPwb = -Rcb;
+        // Matrix3d J_Pc_dPwb = -Rcb;
         Matrix<double, 2, 3> JdPwb = -Jpi * (-Rcb);
         // Jacobian of Pc/error w.r.t dRwb
         Vector3d Paux = Rcb * Rwb.transpose() * (Pw - Pwb);
@@ -1045,13 +1048,14 @@ namespace g2o {
         _jacobianOplusXj = JNavState;
     }
 
-    void EdgeNavStatePointXYZOnlyPose::linearizeOplus() {
+    void EdgeNavStatePointXYZOnlyPose::linearizeOplus()
+    {
         const VertexNavState *vNavState = static_cast<const VertexNavState *>(_vertices[0]);
 
         const NavState &ns = vNavState->estimate();
         Matrix3d Rwb = ns.Get_RotMatrix();
         Vector3d Pwb = ns.Get_P();
-        //const Vector3d& Pw = vPoint->estimate();
+        // const Vector3d& Pw = vPoint->estimate();
 
         Matrix3d Rcb = Rbc.transpose();
         Vector3d Pc = Rcb * Rwb.transpose() * (Pw - Pwb) - Rcb * Pbc;
@@ -1090,13 +1094,15 @@ namespace g2o {
         _jacobianOplusXi = JNavState;
     }
 
-/**
- * @brief VertexGyrBias::VertexGyrBias
- */
-    VertexGyrBias::VertexGyrBias() : BaseVertex<3, Vector3d>() {
+    /**
+     * @brief VertexGyrBias::VertexGyrBias
+     */
+    VertexGyrBias::VertexGyrBias() : BaseVertex<3, Vector3d>()
+    {
     }
 
-    bool VertexGyrBias::read(std::istream &is) {
+    bool VertexGyrBias::read(std::istream &is)
+    {
         Vector3d est;
         for (int i = 0; i < 3; i++)
             is >> est[i];
@@ -1104,34 +1110,39 @@ namespace g2o {
         return true;
     }
 
-    bool VertexGyrBias::write(std::ostream &os) const {
+    bool VertexGyrBias::write(std::ostream &os) const
+    {
         Vector3d est(estimate());
         for (int i = 0; i < 3; i++)
             os << est[i] << " ";
         return os.good();
     }
 
-    void VertexGyrBias::oplusImpl(const double *update_) {
+    void VertexGyrBias::oplusImpl(const double *update_)
+    {
         Eigen::Map<const Vector3d> update(update_);
         _estimate += update;
     }
 
-/**
- * @brief EdgeGyrBias::EdgeGyrBias
- */
-    EdgeGyrBias::EdgeGyrBias() : BaseUnaryEdge<3, Vector3d, VertexGyrBias>() {
+    /**
+     * @brief EdgeGyrBias::EdgeGyrBias
+     */
+    EdgeGyrBias::EdgeGyrBias() : BaseUnaryEdge<3, Vector3d, VertexGyrBias>()
+    {
     }
 
-
-    bool EdgeGyrBias::read(std::istream &is) {
+    bool EdgeGyrBias::read(std::istream &is)
+    {
         return true;
     }
 
-    bool EdgeGyrBias::write(std::ostream &os) const {
+    bool EdgeGyrBias::write(std::ostream &os) const
+    {
         return true;
     }
 
-    void EdgeGyrBias::computeError() {
+    void EdgeGyrBias::computeError()
+    {
         const VertexGyrBias *v = static_cast<const VertexGyrBias *>(_vertices[0]);
         Vector3d bg = v->estimate();
         Matrix3d dRbg = Sophus::SO3::exp(J_dR_bg * bg).matrix();
@@ -1139,8 +1150,8 @@ namespace g2o {
         _error = errR.log();
     }
 
-
-    void EdgeGyrBias::linearizeOplus() {
+    void EdgeGyrBias::linearizeOplus()
+    {
         Sophus::SO3d errR(dRbij.transpose() * Rwbi.transpose() * Rwbj); // dRij^T * Riw * Rwj
         Matrix3d Jlinv = Sophus::SO3::JacobianLInv(errR.log());
         _jacobianOplusXi = -Jlinv * J_dR_bg;

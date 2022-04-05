@@ -1,27 +1,25 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef ORBMATCHER_H
 #define ORBMATCHER_H
-
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
@@ -30,14 +28,15 @@
 
 // 匹配算法
 
-namespace ygz {
+namespace ygz
+{
 
     const int WarpHalfPatchSize = 4;
     const int WarpPatchSize = 8;
 
-    class ORBmatcher {
+    class ORBmatcher
+    {
     public:
-
         ORBmatcher(float nnratio = 0.6, bool checkOri = true);
 
         // Computes the Hamming distance between two ORB descriptors
@@ -62,8 +61,7 @@ namespace ygz {
          * @see SearchLocalPoints() isInFrustum()
          */
         int SearchByProjection(
-                Frame &F, const std::vector<MapPoint *> &vpMapPoints, const float th = 3, bool checkLevel = true
-        );
+            Frame &F, const std::vector<MapPoint *> &vpMapPoints, const float th = 3, bool checkLevel = true);
 
         // Project MapPoints tracked in last frame into the current frame and search matches.
         // Used to track from previous frame (Tracking)
@@ -122,7 +120,7 @@ namespace ygz {
 
         // Matching to triangulate new MapPoints. Check Epipolar Constraint.
         int SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, Matrix3f &F12,
-                                   std::vector<pair<size_t, size_t> > &vMatchedPairs, const bool bOnlyStereo);
+                                   std::vector<pair<size_t, size_t>> &vMatchedPairs, const bool bOnlyStereo);
 
         // Search matches between MapPoints seen in KF1 and KF2 transforming by a Sim3 [s12*R12|t12]
         // In the stereo and RGB-D case, s12=1
@@ -158,38 +156,37 @@ namespace ygz {
 
         // 计算affine wrap矩阵
         void GetWarpAffineMatrix(
-                KeyFrame *ref,
-                Frame *curr,
-                const Vector2f &px_ref,
-                MapPoint *mp,
-                int level,
-                const SE3f &TCR,
-                Eigen::Matrix2f &ACR
-        );
+            KeyFrame *ref,
+            Frame *curr,
+            const Vector2f &px_ref,
+            MapPoint *mp,
+            int level,
+            const SE3f &TCR,
+            Eigen::Matrix2f &ACR);
 
         // perform affine warp
         void WarpAffine(
-                const Eigen::Matrix2f &ACR,
-                const cv::Mat &img_ref,
-                const Vector2f &px_ref,
-                const int &level_ref,
-                const KeyFrame *ref,
-                const int &search_level,
-                const int &half_patch_size,
-                uint8_t *patch
-        );
+            const Eigen::Matrix2f &ACR,
+            const cv::Mat &img_ref,
+            const Vector2f &px_ref,
+            const int &level_ref,
+            const KeyFrame *ref,
+            const int &search_level,
+            const int &half_patch_size,
+            uint8_t *patch);
 
         // 计算最好的金字塔层数
         // 选择一个分辨率，使得warp不要太大
         // ORB每层金字塔默认是1.2倍缩放，所以每缩小一层是1.2*1.2=1.44,取倒数为0.694444444444
         inline int GetBestSearchLevel(
-                const Eigen::Matrix2f &ACR,
-                const int &max_level,
-                const KeyFrame *ref
-        ) {
+            const Eigen::Matrix2f &ACR,
+            const int &max_level,
+            const KeyFrame *ref)
+        {
             int search_level = 0;
             float D = ACR.determinant();
-            while (D > 3.0 && search_level < max_level) {
+            while (D > 3.0 && search_level < max_level)
+            {
                 search_level += 1;
                 D *= ref->mvInvLevelSigma2[1];
             }
@@ -198,16 +195,16 @@ namespace ygz {
 
         // 双线性插值
         inline uchar GetBilateralInterpUchar(
-                const double &x, const double &y, const Mat &gray) {
+            const double &x, const double &y, const Mat &gray)
+        {
             const double xx = x - floor(x);
             const double yy = y - floor(y);
             uchar *data = &gray.data[int(y) * gray.step + int(x)];
             return uchar(
-                    (1 - xx) * (1 - yy) * data[0] +
-                    xx * (1 - yy) * data[1] +
-                    (1 - xx) * yy * data[gray.step] +
-                    xx * yy * data[gray.step + 1]
-            );
+                (1 - xx) * (1 - yy) * data[0] +
+                xx * (1 - yy) * data[1] +
+                (1 - xx) * yy * data[gray.step] +
+                xx * yy * data[gray.step + 1]);
         }
 
         // 匹配局部地图用的 patch, 默认8x8
@@ -219,6 +216,6 @@ namespace ygz {
         bool mbCheckOrientation;
     };
 
-}// namespace ygz
+} // namespace ygz
 
 #endif // ORBMATCHER_H

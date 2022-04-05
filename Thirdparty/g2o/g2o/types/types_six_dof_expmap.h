@@ -45,176 +45,175 @@
 
 using Sophus::SE3d;
 
-
 namespace g2o
 {
-namespace types_six_dof_expmap
-{
-void init();
-}
-
-using namespace Eigen;
-
-typedef Matrix<double, 6, 6> Matrix6d;
-typedef Matrix<double, 6, 1> Vector6d;
-
-
-/**
- * \brief SE3 Vertex parameterized internally with a transformation matrix
- and externally with its exponential map
- */
-class  VertexSE3Expmap : public BaseVertex<6, SE3d>
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-    VertexSE3Expmap() {}
-
-    bool read ( std::istream& is );
-
-    bool write ( std::ostream& os ) const;
-
-    virtual void setToOriginImpl() {
-        _estimate = SE3d();
+    namespace types_six_dof_expmap
+    {
+        void init();
     }
 
-    virtual void oplusImpl ( const double* update_ )  {
-        Vector6d update;
-        update<<update_[3], update_[4],update_[5],update_[0],update_[1],update_[2];
-        setEstimate ( SE3d::exp ( update ) *estimate() );
-    }
-};
+    using namespace Eigen;
 
+    typedef Matrix<double, 6, 6> Matrix6d;
+    typedef Matrix<double, 6, 1> Vector6d;
 
-class  EdgeSE3ProjectXYZ: public  BaseBinaryEdge<2, Vector2d, VertexSBAPointXYZ, VertexSE3Expmap>
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    /**
+     * \brief SE3 Vertex parameterized internally with a transformation matrix
+     and externally with its exponential map
+     */
+    class VertexSE3Expmap : public BaseVertex<6, SE3d>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    EdgeSE3ProjectXYZ() {}
+        VertexSE3Expmap() {}
 
-    bool read ( std::istream& is );
+        bool read(std::istream &is);
 
-    bool write ( std::ostream& os ) const;
+        bool write(std::ostream &os) const;
 
-    void computeError()  {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[1] );
-        const VertexSBAPointXYZ* v2 = static_cast<const VertexSBAPointXYZ*> ( _vertices[0] );
-        Vector2d obs ( _measurement );
-        _error = obs-cam_project ( v1->estimate() * ( v2->estimate() ) );
-    }
+        virtual void setToOriginImpl()
+        {
+            _estimate = SE3d();
+        }
 
-    bool isDepthPositive() {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[1] );
-        const VertexSBAPointXYZ* v2 = static_cast<const VertexSBAPointXYZ*> ( _vertices[0] );
-        return ( v1->estimate() * ( v2->estimate() ) ) ( 2 ) >0.0;
-    }
+        virtual void oplusImpl(const double *update_)
+        {
+            Vector6d update;
+            update << update_[3], update_[4], update_[5], update_[0], update_[1], update_[2];
+            setEstimate(SE3d::exp(update) * estimate());
+        }
+    };
 
+    class EdgeSE3ProjectXYZ : public BaseBinaryEdge<2, Vector2d, VertexSBAPointXYZ, VertexSE3Expmap>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    virtual void linearizeOplus();
+        EdgeSE3ProjectXYZ() {}
 
-    Vector2d cam_project ( const Vector3d & trans_xyz ) const;
+        bool read(std::istream &is);
 
-    double fx, fy, cx, cy;
-};
+        bool write(std::ostream &os) const;
 
+        void computeError()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[1]);
+            const VertexSBAPointXYZ *v2 = static_cast<const VertexSBAPointXYZ *>(_vertices[0]);
+            Vector2d obs(_measurement);
+            _error = obs - cam_project(v1->estimate() * (v2->estimate()));
+        }
 
-class  EdgeStereoSE3ProjectXYZ: public  BaseBinaryEdge<3, Vector3d, VertexSBAPointXYZ, VertexSE3Expmap>
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        bool isDepthPositive()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[1]);
+            const VertexSBAPointXYZ *v2 = static_cast<const VertexSBAPointXYZ *>(_vertices[0]);
+            return (v1->estimate() * (v2->estimate()))(2) > 0.0;
+        }
 
-    EdgeStereoSE3ProjectXYZ();
+        virtual void linearizeOplus();
 
-    bool read ( std::istream& is );
+        Vector2d cam_project(const Vector3d &trans_xyz) const;
 
-    bool write ( std::ostream& os ) const;
+        double fx, fy, cx, cy;
+    };
 
-    void computeError()  {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[1] );
-        const VertexSBAPointXYZ* v2 = static_cast<const VertexSBAPointXYZ*> ( _vertices[0] );
-        Vector3d obs ( _measurement );
-        _error = obs - cam_project ( v1->estimate() * ( v2->estimate() ),bf );
-    }
+    class EdgeStereoSE3ProjectXYZ : public BaseBinaryEdge<3, Vector3d, VertexSBAPointXYZ, VertexSE3Expmap>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    bool isDepthPositive() {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[1] );
-        const VertexSBAPointXYZ* v2 = static_cast<const VertexSBAPointXYZ*> ( _vertices[0] );
-        return ( v1->estimate() * ( v2->estimate() ) ) ( 2 ) >0.0;
-    }
+        EdgeStereoSE3ProjectXYZ();
 
+        bool read(std::istream &is);
 
-    virtual void linearizeOplus();
+        bool write(std::ostream &os) const;
 
-    Vector3d cam_project ( const Vector3d & trans_xyz, const float &bf ) const;
+        void computeError()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[1]);
+            const VertexSBAPointXYZ *v2 = static_cast<const VertexSBAPointXYZ *>(_vertices[0]);
+            Vector3d obs(_measurement);
+            _error = obs - cam_project(v1->estimate() * (v2->estimate()), bf);
+        }
 
-    double fx, fy, cx, cy, bf;
-};
+        bool isDepthPositive()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[1]);
+            const VertexSBAPointXYZ *v2 = static_cast<const VertexSBAPointXYZ *>(_vertices[0]);
+            return (v1->estimate() * (v2->estimate()))(2) > 0.0;
+        }
 
-class  EdgeSE3ProjectXYZOnlyPose: public  BaseUnaryEdge<2, Vector2d, VertexSE3Expmap>
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        virtual void linearizeOplus();
 
-    EdgeSE3ProjectXYZOnlyPose() {}
+        Vector3d cam_project(const Vector3d &trans_xyz, const float &bf) const;
 
-    bool read ( std::istream& is );
+        double fx, fy, cx, cy, bf;
+    };
 
-    bool write ( std::ostream& os ) const;
+    class EdgeSE3ProjectXYZOnlyPose : public BaseUnaryEdge<2, Vector2d, VertexSE3Expmap>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    void computeError()  {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[0] );
-        Vector2d obs ( _measurement );
-        _error = obs-cam_project ( v1->estimate() * ( Xw ) );
-    }
+        EdgeSE3ProjectXYZOnlyPose() {}
 
-    bool isDepthPositive() {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[0] );
-        return ( v1->estimate() * ( Xw ) ) ( 2 ) >0.0;
-    }
+        bool read(std::istream &is);
 
+        bool write(std::ostream &os) const;
 
-    virtual void linearizeOplus();
+        void computeError()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[0]);
+            Vector2d obs(_measurement);
+            _error = obs - cam_project(v1->estimate() * (Xw));
+        }
 
-    Vector2d cam_project ( const Vector3d & trans_xyz ) const;
+        bool isDepthPositive()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[0]);
+            return (v1->estimate() * (Xw))(2) > 0.0;
+        }
 
-    Vector3d Xw;
-    double fx, fy, cx, cy;
-};
+        virtual void linearizeOplus();
 
+        Vector2d cam_project(const Vector3d &trans_xyz) const;
 
-class  EdgeStereoSE3ProjectXYZOnlyPose: public  BaseUnaryEdge<3, Vector3d, VertexSE3Expmap>
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Vector3d Xw;
+        double fx, fy, cx, cy;
+    };
 
-    EdgeStereoSE3ProjectXYZOnlyPose() {}
+    class EdgeStereoSE3ProjectXYZOnlyPose : public BaseUnaryEdge<3, Vector3d, VertexSE3Expmap>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    bool read ( std::istream& is );
+        EdgeStereoSE3ProjectXYZOnlyPose() {}
 
-    bool write ( std::ostream& os ) const;
+        bool read(std::istream &is);
 
-    void computeError()  {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[0] );
-        Vector3d obs ( _measurement );
-        _error = obs - cam_project ( v1->estimate() * ( Xw ) );
-    }
+        bool write(std::ostream &os) const;
 
-    bool isDepthPositive() {
-        const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*> ( _vertices[0] );
-        return ( v1->estimate() * ( Xw ) ) ( 2 ) >0.0;
-    }
+        void computeError()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[0]);
+            Vector3d obs(_measurement);
+            _error = obs - cam_project(v1->estimate() * (Xw));
+        }
 
+        bool isDepthPositive()
+        {
+            const VertexSE3Expmap *v1 = static_cast<const VertexSE3Expmap *>(_vertices[0]);
+            return (v1->estimate() * (Xw))(2) > 0.0;
+        }
 
-    virtual void linearizeOplus();
+        virtual void linearizeOplus();
 
-    Vector3d cam_project ( const Vector3d & trans_xyz ) const;
+        Vector3d cam_project(const Vector3d &trans_xyz) const;
 
-    Vector3d Xw;
-    double fx, fy, cx, cy, bf;
-};
-
-
+        Vector3d Xw;
+        double fx, fy, cx, cy, bf;
+    };
 
 } // end namespace
 

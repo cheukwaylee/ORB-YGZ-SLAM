@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef YGZ_KEYFRAME_H_
 #define YGZ_KEYFRAME_H_
@@ -31,7 +31,8 @@
 #include "IMU/NavState.h"
 #include "IMU/IMUPreintegrator.h"
 
-namespace ygz {
+namespace ygz
+{
 
     class Map;
 
@@ -46,9 +47,9 @@ namespace ygz {
      * Frame的数据都是公开访问的，但Keyframe多数操作是带锁的
      * 许多数据会被三个线程同时访问，所以用锁的地方很普遍
      */
-    class KeyFrame {
+    class KeyFrame
+    {
     public:
-
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -153,46 +154,51 @@ namespace ygz {
         // Compute Scene Depth (q=2 median). Used in monocular.
         float ComputeSceneMedianDepth(const int q);
 
-        static bool weightComp(int a, int b) {
+        static bool weightComp(int a, int b)
+        {
             return a > b;
         }
 
-        static bool lId(KeyFrame *pKF1, KeyFrame *pKF2) {
+        static bool lId(KeyFrame *pKF1, KeyFrame *pKF2)
+        {
             return pKF1->mnId < pKF2->mnId;
         }
 
         // coordinate transform: world, camera, pixel
-        inline Vector3f World2Camera(const Vector3f &p_w, const SE3f &T_c_w) const {
+        inline Vector3f World2Camera(const Vector3f &p_w, const SE3f &T_c_w) const
+        {
             return T_c_w * p_w;
         }
 
-        inline Vector3f Camera2World(const Vector3f &p_c, const SE3f &T_c_w) const {
+        inline Vector3f Camera2World(const Vector3f &p_c, const SE3f &T_c_w) const
+        {
             return T_c_w.inverse() * p_c;
         }
 
-        inline Vector2f Camera2Pixel(const Vector3f &p_c) const {
+        inline Vector2f Camera2Pixel(const Vector3f &p_c) const
+        {
             return Vector2f(
-                    fx * p_c(0, 0) / p_c(2, 0) + cx,
-                    fy * p_c(1, 0) / p_c(2, 0) + cy
-            );
+                fx * p_c(0, 0) / p_c(2, 0) + cx,
+                fy * p_c(1, 0) / p_c(2, 0) + cy);
         }
 
-        inline Vector3f Pixel2Camera(const Vector2f &p_p, float depth = 1) const {
+        inline Vector3f Pixel2Camera(const Vector2f &p_p, float depth = 1) const
+        {
             return Vector3f(
-                    (p_p(0, 0) - cx) * depth / fx,
-                    (p_p(1, 0) - cy) * depth / fy,
-                    depth
-            );
+                (p_p(0, 0) - cx) * depth / fx,
+                (p_p(1, 0) - cy) * depth / fy,
+                depth);
         }
 
-        inline Vector3f Pixel2World(const Vector2f &p_p, const SE3f &T_c_w, float depth = 1) const {
+        inline Vector3f Pixel2World(const Vector2f &p_p, const SE3f &T_c_w, float depth = 1) const
+        {
             return Camera2World(Pixel2Camera(p_p, depth), T_c_w);
         }
 
-        inline Vector2f World2Pixel(const Vector3f &p_w, const SE3f &T_c_w) const {
+        inline Vector2f World2Pixel(const Vector3f &p_w, const SE3f &T_c_w) const
+        {
             return Camera2Pixel(World2Camera(p_w, T_c_w));
         }
-
 
         KeyFrame *GetPrevKeyFrame(void);
 
@@ -239,23 +245,22 @@ namespace ygz {
         void SetInitialNavStateAndBias(const NavState &ns);
 
         // Variables used by loop closing
-        NavState mNavStateGBA;       //mTcwGBA
-        NavState mNavStateBefGBA;    //mTcwBefGBA
+        NavState mNavStateGBA;    // mTcwGBA
+        NavState mNavStateBefGBA; // mTcwBefGBA
 
     public:
-
         // The following variables are accesed from only 1 thread or never change (no mutex needed).
         // nNextID名字改为nLastID更合适，表示上一个KeyFrame的ID号
         static long unsigned int nNextId;
         // 在nNextID的基础上加1就得到了mnID，为当前KeyFrame的ID号
-        long unsigned int mnId =0;
+        long unsigned int mnId = 0;
         // 每个KeyFrame基本属性是它是一个Frame，KeyFrame初始化的时候需要Frame，
 
         // mnFrameId记录了该KeyFrame是由哪个Frame初始化的
         const long unsigned int mnFrameId;
 
         // 时间
-        const double mTimeStamp =0;
+        const double mTimeStamp = 0;
 
         // Grid (to speed up feature matching)
         // 和Frame类中的定义相同
@@ -295,11 +300,11 @@ namespace ygz {
         // 特征点位置
         const std::vector<cv::KeyPoint> mvKeys;
         const std::vector<float> mvuRight; // negative value for monocular points
-        const std::vector<float> mvDepth; // negative value for monocular points
+        const std::vector<float> mvDepth;  // negative value for monocular points
         const cv::Mat mDescriptors;
 
-        //BoW
-        DBoW2::BowVector mBowVec; ///< Vector of words to represent images
+        // BoW
+        DBoW2::BowVector mBowVec;      ///< Vector of words to represent images
         DBoW2::FeatureVector mFeatVec; ///< Vector of nodes with indexes of local features
 
         // Pose relative to parent (this is computed when bad flag is activated)
@@ -354,11 +359,11 @@ namespace ygz {
         ORBVocabulary *mpORBvocabulary;
 
         // Grid over the image to speed up feature matching
-        std::vector<std::vector<std::vector<size_t> > > mGrid;
+        std::vector<std::vector<std::vector<size_t>>> mGrid;
 
-        std::map<KeyFrame *, int> mConnectedKeyFrameWeights; ///< 与该关键帧连接的关键帧与权重
+        std::map<KeyFrame *, int> mConnectedKeyFrameWeights;  ///< 与该关键帧连接的关键帧与权重
         std::vector<KeyFrame *> mvpOrderedConnectedKeyFrames; ///< 排序后的关键帧
-        std::vector<int> mvOrderedWeights; ///< 排序后的权重(从大到小)
+        std::vector<int> mvOrderedWeights;                    ///< 排序后的权重(从大到小)
 
         // Spanning Tree and Loop Edges
         // std::set是集合，相比vector，进行插入数据这样的操作时会自动排序
@@ -372,16 +377,15 @@ namespace ygz {
         bool mbToBeErased = false;
         bool mbBad = false;
 
-        float mHalfBaseline =0; // Only for visualization
+        float mHalfBaseline = 0; // Only for visualization
 
-        Map *mpMap =nullptr;
+        Map *mpMap = nullptr;
 
         std::mutex mMutexPose;
         std::mutex mMutexConnections;
         std::mutex mMutexFeatures;
-
     };
 
-} //namespace ygz
+} // namespace ygz
 
 #endif // KEYFRAME_H

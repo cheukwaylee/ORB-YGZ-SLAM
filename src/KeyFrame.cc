@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <iomanip>
 
 #include "KeyFrame.h"
@@ -25,11 +25,13 @@
 #include "ORBmatcher.h"
 #include "Map.h"
 
-namespace ygz {
+namespace ygz
+{
 
     long unsigned int KeyFrame::nNextId = 0;
 
-    void KeyFrame::UpdateNavStatePVRFromTcw(const SE3d &Tcw, const SE3d &Tbc) {
+    void KeyFrame::UpdateNavStatePVRFromTcw(const SE3d &Tcw, const SE3d &Tbc)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         SE3d Twb = (Tbc * Tcw).inverse();
         Matrix3d Rwb = Twb.rotationMatrix();
@@ -37,14 +39,15 @@ namespace ygz {
 
         Matrix3d Rw1 = mNavState.Get_RotMatrix();
         Vector3d Vw1 = mNavState.Get_V();
-        Vector3d Vw2 = Rwb * Rw1.transpose() * Vw1;   // bV1 = bV2 ==> Rwb1^T*wV1 = Rwb2^T*wV2 ==> wV2 = Rwb2*Rwb1^T*wV1
+        Vector3d Vw2 = Rwb * Rw1.transpose() * Vw1; // bV1 = bV2 ==> Rwb1^T*wV1 = Rwb2^T*wV2 ==> wV2 = Rwb2*Rwb1^T*wV1
 
         mNavState.Set_Pos(Pwb);
         mNavState.Set_Rot(Rwb);
         mNavState.Set_Vel(Vw2);
     }
 
-    void KeyFrame::SetInitialNavStateAndBias(const NavState &ns) {
+    void KeyFrame::SetInitialNavStateAndBias(const NavState &ns)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState = ns;
         // Set bias as bias+delta_bias, and reset the delta_bias term
@@ -54,32 +57,38 @@ namespace ygz {
         mNavState.Set_DeltaBiasAcc(Vector3d::Zero());
     }
 
-    KeyFrame *KeyFrame::GetPrevKeyFrame(void) {
+    KeyFrame *KeyFrame::GetPrevKeyFrame(void)
+    {
         unique_lock<mutex> lock(mMutexPrevKF);
         return mpPrevKeyFrame;
     }
 
-    KeyFrame *KeyFrame::GetNextKeyFrame(void) {
+    KeyFrame *KeyFrame::GetNextKeyFrame(void)
+    {
         unique_lock<mutex> lock(mMutexNextKF);
         return mpNextKeyFrame;
     }
 
-    void KeyFrame::SetPrevKeyFrame(KeyFrame *pKF) {
+    void KeyFrame::SetPrevKeyFrame(KeyFrame *pKF)
+    {
         unique_lock<mutex> lock(mMutexPrevKF);
         mpPrevKeyFrame = pKF;
     }
 
-    void KeyFrame::SetNextKeyFrame(KeyFrame *pKF) {
+    void KeyFrame::SetNextKeyFrame(KeyFrame *pKF)
+    {
         unique_lock<mutex> lock(mMutexNextKF);
         mpNextKeyFrame = pKF;
     }
 
-    std::vector<IMUData> KeyFrame::GetVectorIMUData(void) {
+    std::vector<IMUData> KeyFrame::GetVectorIMUData(void)
+    {
         unique_lock<mutex> lock(mMutexIMUData);
         return mvIMUData;
     }
 
-    void KeyFrame::AppendIMUDataToFront(KeyFrame *pPrevKF) {
+    void KeyFrame::AppendIMUDataToFront(KeyFrame *pPrevKF)
+    {
         std::vector<IMUData> vimunew = pPrevKF->GetVectorIMUData();
         {
             unique_lock<mutex> lock(mMutexIMUData);
@@ -88,7 +97,8 @@ namespace ygz {
         }
     }
 
-    void KeyFrame::UpdatePoseFromNS(const SE3d &Tbc) {
+    void KeyFrame::UpdatePoseFromNS(const SE3d &Tbc)
+    {
         Matrix3d Rbc_ = Tbc.rotationMatrix().cast<double>();
         Vector3d Pbc_ = Tbc.translation();
 
@@ -104,7 +114,8 @@ namespace ygz {
         SetPose(Tcw_.cast<float>());
     }
 
-    void KeyFrame::UpdateNavState(const IMUPreintegrator &imupreint, const Vector3d &gw) {
+    void KeyFrame::UpdateNavState(const IMUPreintegrator &imupreint, const Vector3d &gw)
+    {
         unique_lock<mutex> lock(mMutexNavState);
 
         Matrix3d dR = imupreint.getDeltaR();
@@ -126,69 +137,85 @@ namespace ygz {
         mNavState.Set_Rot(Rwb);
     }
 
-    void KeyFrame::SetNavState(const NavState &ns) {
+    void KeyFrame::SetNavState(const NavState &ns)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState = ns;
     }
 
-    const NavState &KeyFrame::GetNavState(void) {
+    const NavState &KeyFrame::GetNavState(void)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         return mNavState;
     }
 
-    void KeyFrame::SetNavStateBiasGyr(const Vector3d &bg) {
+    void KeyFrame::SetNavStateBiasGyr(const Vector3d &bg)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_BiasGyr(bg);
     }
 
-    void KeyFrame::SetNavStateBiasAcc(const Vector3d &ba) {
+    void KeyFrame::SetNavStateBiasAcc(const Vector3d &ba)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_BiasAcc(ba);
     }
 
-    void KeyFrame::SetNavStateVel(const Vector3d &vel) {
+    void KeyFrame::SetNavStateVel(const Vector3d &vel)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_Vel(vel);
     }
 
-    void KeyFrame::SetNavStatePos(const Vector3d &pos) {
+    void KeyFrame::SetNavStatePos(const Vector3d &pos)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_Pos(pos);
     }
 
-    void KeyFrame::SetNavStateRot(const Matrix3d &rot) {
+    void KeyFrame::SetNavStateRot(const Matrix3d &rot)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_Rot(rot);
     }
 
-    void KeyFrame::SetNavStateRot(const SO3d &rot) {
+    void KeyFrame::SetNavStateRot(const SO3d &rot)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_Rot(rot);
     }
 
-    void KeyFrame::SetNavStateDeltaBg(const Vector3d &dbg) {
+    void KeyFrame::SetNavStateDeltaBg(const Vector3d &dbg)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_DeltaBiasGyr(dbg);
     }
 
-    void KeyFrame::SetNavStateDeltaBa(const Vector3d &dba) {
+    void KeyFrame::SetNavStateDeltaBa(const Vector3d &dba)
+    {
         unique_lock<mutex> lock(mMutexNavState);
         mNavState.Set_DeltaBiasAcc(dba);
     }
 
-    const IMUPreintegrator &KeyFrame::GetIMUPreInt(void) {
+    const IMUPreintegrator &KeyFrame::GetIMUPreInt(void)
+    {
         unique_lock<mutex> lock(mMutexIMUData);
         return mIMUPreInt;
     }
 
-    void KeyFrame::ComputePreInt(void) {
+    void KeyFrame::ComputePreInt(void)
+    {
         unique_lock<mutex> lock(mMutexIMUData);
-        if (mpPrevKeyFrame == NULL) {
-            if (mnId != 0) {
+        if (mpPrevKeyFrame == NULL)
+        {
+            if (mnId != 0)
+            {
                 cerr << "previous KeyFrame is NULL, pre-integrator not changed. id: " << mnId << endl;
             }
             return;
-        } else {
+        }
+        else
+        {
             // Reset pre-integrator first
             mIMUPreInt.reset();
 
@@ -206,13 +233,14 @@ namespace ygz {
                 mIMUPreInt.update(imu._g - bg, imu._a - ba, dt);
             }
             // integrate each imu
-            for (size_t i = 0; i < mvIMUData.size(); i++) {
+            for (size_t i = 0; i < mvIMUData.size(); i++)
+            {
                 const IMUData &imu = mvIMUData[i];
                 double nextt;
                 if (i == mvIMUData.size() - 1)
-                    nextt = mTimeStamp;         // last IMU, next is this KeyFrame
+                    nextt = mTimeStamp; // last IMU, next is this KeyFrame
                 else
-                    nextt = mvIMUData[i + 1]._t;  // regular condition, next is imu data
+                    nextt = mvIMUData[i + 1]._t; // regular condition, next is imu data
 
                 // delta time
                 double dt = std::max(0., nextt - imu._t);
@@ -222,24 +250,25 @@ namespace ygz {
         }
     }
 
-// VIO constructor
-    KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB, std::vector<IMUData> vIMUData, KeyFrame *pPrevKF) :
-            mnFrameId(F.mnId), mTimeStamp(F.mTimeStamp), mnGridCols(FRAME_GRID_COLS), mnGridRows(FRAME_GRID_ROWS),
-            mfGridElementWidthInv(F.mfGridElementWidthInv), mfGridElementHeightInv(F.mfGridElementHeightInv),
-            mnTrackReferenceForFrame(0), mnFuseTargetForKF(0), mnBALocalForKF(0), mnBAFixedForKF(0),
-            mnLoopQuery(0), mnLoopWords(0), mnRelocQuery(0), mnRelocWords(0), mnBAGlobalForKF(0),
-            fx(F.fx), fy(F.fy), cx(F.cx), cy(F.cy), invfx(F.invfx), invfy(F.invfy),
-            mbf(F.mbf), mb(F.mb), mThDepth(F.mThDepth), N(F.N), mvKeys(F.mvKeys),
-            mvuRight(F.mvuRight), mvDepth(F.mvDepth), mDescriptors(F.mDescriptors.clone()),
-            mBowVec(F.mBowVec), mFeatVec(F.mFeatVec), mnScaleLevels(F.mnScaleLevels), mfScaleFactor(F.mfScaleFactor),
-            mfLogScaleFactor(F.mfLogScaleFactor), mvScaleFactors(F.mvScaleFactors), mvLevelSigma2(F.mvLevelSigma2),
-            mvInvLevelSigma2(F.mvInvLevelSigma2), mnMinX(F.mnMinX), mnMinY(F.mnMinY), mnMaxX(F.mnMaxX),
-            mnMaxY(F.mnMaxY), mK(F.mK), mvpMapPoints(F.mvpMapPoints), mpKeyFrameDB(pKFDB),
-            mpORBvocabulary(F.mpORBvocabulary), mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
-            mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb / 2), mpMap(pMap) {
+    // VIO constructor
+    KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB, std::vector<IMUData> vIMUData, KeyFrame *pPrevKF) : mnFrameId(F.mnId), mTimeStamp(F.mTimeStamp), mnGridCols(FRAME_GRID_COLS), mnGridRows(FRAME_GRID_ROWS),
+                                                                                                                         mfGridElementWidthInv(F.mfGridElementWidthInv), mfGridElementHeightInv(F.mfGridElementHeightInv),
+                                                                                                                         mnTrackReferenceForFrame(0), mnFuseTargetForKF(0), mnBALocalForKF(0), mnBAFixedForKF(0),
+                                                                                                                         mnLoopQuery(0), mnLoopWords(0), mnRelocQuery(0), mnRelocWords(0), mnBAGlobalForKF(0),
+                                                                                                                         fx(F.fx), fy(F.fy), cx(F.cx), cy(F.cy), invfx(F.invfx), invfy(F.invfy),
+                                                                                                                         mbf(F.mbf), mb(F.mb), mThDepth(F.mThDepth), N(F.N), mvKeys(F.mvKeys),
+                                                                                                                         mvuRight(F.mvuRight), mvDepth(F.mvDepth), mDescriptors(F.mDescriptors.clone()),
+                                                                                                                         mBowVec(F.mBowVec), mFeatVec(F.mFeatVec), mnScaleLevels(F.mnScaleLevels), mfScaleFactor(F.mfScaleFactor),
+                                                                                                                         mfLogScaleFactor(F.mfLogScaleFactor), mvScaleFactors(F.mvScaleFactors), mvLevelSigma2(F.mvLevelSigma2),
+                                                                                                                         mvInvLevelSigma2(F.mvInvLevelSigma2), mnMinX(F.mnMinX), mnMinY(F.mnMinY), mnMaxX(F.mnMaxX),
+                                                                                                                         mnMaxY(F.mnMaxY), mK(F.mK), mvpMapPoints(F.mvpMapPoints), mpKeyFrameDB(pKFDB),
+                                                                                                                         mpORBvocabulary(F.mpORBvocabulary), mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
+                                                                                                                         mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb / 2), mpMap(pMap)
+    {
         mvIMUData = vIMUData;
 
-        if (pPrevKF) {
+        if (pPrevKF)
+        {
             pPrevKF->SetNextKeyFrame(this);
         }
         mpPrevKeyFrame = pPrevKF;
@@ -248,52 +277,57 @@ namespace ygz {
         mnId = nNextId++;
 
         mGrid.resize(mnGridCols);
-        for (int i = 0; i < mnGridCols; i++) {
+        for (int i = 0; i < mnGridCols; i++)
+        {
             mGrid[i].resize(mnGridRows);
             for (int j = 0; j < mnGridRows; j++)
                 mGrid[i][j] = F.mGrid[i][j];
         }
 
         SetPose(F.mTcw);
-        for (cv::Mat &im: F.mvImagePyramid) {
+        for (cv::Mat &im : F.mvImagePyramid)
+        {
             mvImagePyramid.push_back(im);
         }
     }
 
     // regular constructor
-    KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB) :
-            mnFrameId(F.mnId), mTimeStamp(F.mTimeStamp), mnGridCols(FRAME_GRID_COLS), mnGridRows(FRAME_GRID_ROWS),
-            mfGridElementWidthInv(F.mfGridElementWidthInv), mfGridElementHeightInv(F.mfGridElementHeightInv),
-            mnTrackReferenceForFrame(0), mnFuseTargetForKF(0), mnBALocalForKF(0), mnBAFixedForKF(0),
-            mnLoopQuery(0), mnLoopWords(0), mnRelocQuery(0), mnRelocWords(0), mnBAGlobalForKF(0),
-            fx(F.fx), fy(F.fy), cx(F.cx), cy(F.cy), invfx(F.invfx), invfy(F.invfy),
-            mbf(F.mbf), mb(F.mb), mThDepth(F.mThDepth), N(F.N), mvKeys(F.mvKeys),
-            mvuRight(F.mvuRight), mvDepth(F.mvDepth), mDescriptors(F.mDescriptors.clone()),
-            mBowVec(F.mBowVec), mFeatVec(F.mFeatVec), mnScaleLevels(F.mnScaleLevels), mfScaleFactor(F.mfScaleFactor),
-            mfLogScaleFactor(F.mfLogScaleFactor), mvScaleFactors(F.mvScaleFactors), mvLevelSigma2(F.mvLevelSigma2),
-            mvInvLevelSigma2(F.mvInvLevelSigma2), mnMinX(F.mnMinX), mnMinY(F.mnMinY), mnMaxX(F.mnMaxX),
-            mnMaxY(F.mnMaxY), mK(F.mK), mvpMapPoints(F.mvpMapPoints), mpKeyFrameDB(pKFDB),
-            mpORBvocabulary(F.mpORBvocabulary), mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
-            mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb / 2), mpMap(pMap), mpPrevKeyFrame(nullptr),
-            mpNextKeyFrame(nullptr) {
+    KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB) : mnFrameId(F.mnId), mTimeStamp(F.mTimeStamp), mnGridCols(FRAME_GRID_COLS), mnGridRows(FRAME_GRID_ROWS),
+                                                                       mfGridElementWidthInv(F.mfGridElementWidthInv), mfGridElementHeightInv(F.mfGridElementHeightInv),
+                                                                       mnTrackReferenceForFrame(0), mnFuseTargetForKF(0), mnBALocalForKF(0), mnBAFixedForKF(0),
+                                                                       mnLoopQuery(0), mnLoopWords(0), mnRelocQuery(0), mnRelocWords(0), mnBAGlobalForKF(0),
+                                                                       fx(F.fx), fy(F.fy), cx(F.cx), cy(F.cy), invfx(F.invfx), invfy(F.invfy),
+                                                                       mbf(F.mbf), mb(F.mb), mThDepth(F.mThDepth), N(F.N), mvKeys(F.mvKeys),
+                                                                       mvuRight(F.mvuRight), mvDepth(F.mvDepth), mDescriptors(F.mDescriptors.clone()),
+                                                                       mBowVec(F.mBowVec), mFeatVec(F.mFeatVec), mnScaleLevels(F.mnScaleLevels), mfScaleFactor(F.mfScaleFactor),
+                                                                       mfLogScaleFactor(F.mfLogScaleFactor), mvScaleFactors(F.mvScaleFactors), mvLevelSigma2(F.mvLevelSigma2),
+                                                                       mvInvLevelSigma2(F.mvInvLevelSigma2), mnMinX(F.mnMinX), mnMinY(F.mnMinY), mnMaxX(F.mnMaxX),
+                                                                       mnMaxY(F.mnMaxY), mK(F.mK), mvpMapPoints(F.mvpMapPoints), mpKeyFrameDB(pKFDB),
+                                                                       mpORBvocabulary(F.mpORBvocabulary), mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
+                                                                       mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb / 2), mpMap(pMap), mpPrevKeyFrame(nullptr),
+                                                                       mpNextKeyFrame(nullptr)
+    {
         mnId = nNextId++;
 
         mGrid.resize(mnGridCols);
-        for (int i = 0; i < mnGridCols; i++) {
+        for (int i = 0; i < mnGridCols; i++)
+        {
             mGrid[i].resize(mnGridRows);
             for (int j = 0; j < mnGridRows; j++)
                 mGrid[i][j] = F.mGrid[i][j];
         }
 
         SetPose(F.mTcw);
-        for (cv::Mat &im: F.mvImagePyramid) {
+        for (cv::Mat &im : F.mvImagePyramid)
+        {
             mvImagePyramid.push_back(im);
         }
-
     }
 
-    void KeyFrame::ComputeBoW() {
-        if (mBowVec.empty() || mFeatVec.empty()) {
+    void KeyFrame::ComputeBoW()
+    {
+        if (mBowVec.empty() || mFeatVec.empty())
+        {
             vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
             // Feature vector associate features with nodes in the 4th level (from leaves up)
             // We assume the vocabulary tree has 6 levels, change the 4 otherwise
@@ -301,7 +335,8 @@ namespace ygz {
         }
     }
 
-    void KeyFrame::SetPose(const SE3f &Tcw_) {
+    void KeyFrame::SetPose(const SE3f &Tcw_)
+    {
         unique_lock<mutex> lock(mMutexPose);
         Tcw = Tcw_;
         Matrix3f Rcw = Tcw.rotationMatrix();
@@ -314,37 +349,44 @@ namespace ygz {
         Cw = (Twc * center);
     }
 
-    SE3f KeyFrame::GetPose() {
+    SE3f KeyFrame::GetPose()
+    {
         unique_lock<mutex> lock(mMutexPose);
         return Tcw;
     }
 
-    SE3f KeyFrame::GetPoseInverse() {
+    SE3f KeyFrame::GetPoseInverse()
+    {
         unique_lock<mutex> lock(mMutexPose);
         return Twc;
     }
 
-    Vector3f KeyFrame::GetCameraCenter() {
+    Vector3f KeyFrame::GetCameraCenter()
+    {
         unique_lock<mutex> lock(mMutexPose);
         return Ow;
     }
 
-    Vector3f KeyFrame::GetStereoCenter() {
+    Vector3f KeyFrame::GetStereoCenter()
+    {
         unique_lock<mutex> lock(mMutexPose);
         return Cw;
     }
 
-    Matrix3f KeyFrame::GetRotation() {
+    Matrix3f KeyFrame::GetRotation()
+    {
         unique_lock<mutex> lock(mMutexPose);
         return Tcw.rotationMatrix();
     }
 
-    Vector3f KeyFrame::GetTranslation() {
+    Vector3f KeyFrame::GetTranslation()
+    {
         unique_lock<mutex> lock(mMutexPose);
         return Tcw.translation();
     }
 
-    void KeyFrame::AddConnection(KeyFrame *pKF, const int &weight) {
+    void KeyFrame::AddConnection(KeyFrame *pKF, const int &weight)
+    {
         {
             unique_lock<mutex> lock(mMutexConnections);
             if (!mConnectedKeyFrameWeights.count(pKF))
@@ -358,18 +400,20 @@ namespace ygz {
         UpdateBestCovisibles();
     }
 
-    void KeyFrame::UpdateBestCovisibles() {
+    void KeyFrame::UpdateBestCovisibles()
+    {
         unique_lock<mutex> lock(mMutexConnections);
-        vector<pair<int, KeyFrame *> > vPairs;
+        vector<pair<int, KeyFrame *>> vPairs;
         vPairs.reserve(mConnectedKeyFrameWeights.size());
         for (map<KeyFrame *, int>::iterator mit = mConnectedKeyFrameWeights.begin(), mend = mConnectedKeyFrameWeights.end();
              mit != mend; mit++)
             vPairs.push_back(make_pair(mit->second, mit->first));
 
         sort(vPairs.begin(), vPairs.end());
-        list < KeyFrame * > lKFs;
+        list<KeyFrame *> lKFs;
         list<int> lWs;
-        for (size_t i = 0, iend = vPairs.size(); i < iend; i++) {
+        for (size_t i = 0, iend = vPairs.size(); i < iend; i++)
+        {
             lKFs.push_front(vPairs[i].second);
             lWs.push_front(vPairs[i].first);
         }
@@ -378,7 +422,8 @@ namespace ygz {
         mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
     }
 
-    set<KeyFrame *> KeyFrame::GetConnectedKeyFrames() {
+    set<KeyFrame *> KeyFrame::GetConnectedKeyFrames()
+    {
         unique_lock<mutex> lock(mMutexConnections);
         set<KeyFrame *> s;
         for (map<KeyFrame *, int>::iterator mit = mConnectedKeyFrameWeights.begin();
@@ -387,21 +432,23 @@ namespace ygz {
         return s;
     }
 
-    vector<KeyFrame *> KeyFrame::GetVectorCovisibleKeyFrames() {
+    vector<KeyFrame *> KeyFrame::GetVectorCovisibleKeyFrames()
+    {
         unique_lock<mutex> lock(mMutexConnections);
         return mvpOrderedConnectedKeyFrames;
     }
 
-    vector<KeyFrame *> KeyFrame::GetBestCovisibilityKeyFrames(const int &N) {
+    vector<KeyFrame *> KeyFrame::GetBestCovisibilityKeyFrames(const int &N)
+    {
         unique_lock<mutex> lock(mMutexConnections);
-        if ((int) mvpOrderedConnectedKeyFrames.size() < N)
+        if ((int)mvpOrderedConnectedKeyFrames.size() < N)
             return mvpOrderedConnectedKeyFrames;
         else
             return vector<KeyFrame *>(mvpOrderedConnectedKeyFrames.begin(), mvpOrderedConnectedKeyFrames.begin() + N);
-
     }
 
-    vector<KeyFrame *> KeyFrame::GetCovisiblesByWeight(const int &w) {
+    vector<KeyFrame *> KeyFrame::GetCovisiblesByWeight(const int &w)
+    {
         unique_lock<mutex> lock(mMutexConnections);
 
         if (mvpOrderedConnectedKeyFrames.empty())
@@ -411,13 +458,15 @@ namespace ygz {
                                                KeyFrame::weightComp);
         if (it == mvOrderedWeights.end())
             return vector<KeyFrame *>();
-        else {
+        else
+        {
             int n = it - mvOrderedWeights.begin();
             return vector<KeyFrame *>(mvpOrderedConnectedKeyFrames.begin(), mvpOrderedConnectedKeyFrames.begin() + n);
         }
     }
 
-    int KeyFrame::GetWeight(KeyFrame *pKF) {
+    int KeyFrame::GetWeight(KeyFrame *pKF)
+    {
         unique_lock<mutex> lock(mMutexConnections);
         if (mConnectedKeyFrameWeights.count(pKF))
             return mConnectedKeyFrameWeights[pKF];
@@ -425,31 +474,36 @@ namespace ygz {
             return 0;
     }
 
-    void KeyFrame::AddMapPoint(MapPoint *pMP, const size_t &idx) {
+    void KeyFrame::AddMapPoint(MapPoint *pMP, const size_t &idx)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         mvpMapPoints[idx] = pMP;
     }
 
-    void KeyFrame::EraseMapPointMatch(const size_t &idx) {
+    void KeyFrame::EraseMapPointMatch(const size_t &idx)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         mvpMapPoints[idx] = static_cast<MapPoint *>(NULL);
     }
 
-    void KeyFrame::EraseMapPointMatch(MapPoint *pMP) {
+    void KeyFrame::EraseMapPointMatch(MapPoint *pMP)
+    {
         int idx = pMP->GetIndexInKeyFrame(this);
         if (idx >= 0)
             mvpMapPoints[idx] = static_cast<MapPoint *>(NULL);
     }
 
-
-    void KeyFrame::ReplaceMapPointMatch(const size_t &idx, MapPoint *pMP) {
+    void KeyFrame::ReplaceMapPointMatch(const size_t &idx, MapPoint *pMP)
+    {
         mvpMapPoints[idx] = pMP;
     }
 
-    set<MapPoint *> KeyFrame::GetMapPoints() {
+    set<MapPoint *> KeyFrame::GetMapPoints()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         set<MapPoint *> s;
-        for (size_t i = 0, iend = mvpMapPoints.size(); i < iend; i++) {
+        for (size_t i = 0, iend = mvpMapPoints.size(); i < iend; i++)
+        {
             if (!mvpMapPoints[i])
                 continue;
             MapPoint *pMP = mvpMapPoints[i];
@@ -459,19 +513,25 @@ namespace ygz {
         return s;
     }
 
-    int KeyFrame::TrackedMapPoints(const int &minObs) {
+    int KeyFrame::TrackedMapPoints(const int &minObs)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
 
         int nPoints = 0;
         const bool bCheckObs = minObs > 0;
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             MapPoint *pMP = mvpMapPoints[i];
-            if (pMP) {
-                if (!pMP->isBad()) {
-                    if (bCheckObs) {
+            if (pMP)
+            {
+                if (!pMP->isBad())
+                {
+                    if (bCheckObs)
+                    {
                         if (mvpMapPoints[i]->Observations() >= minObs)
                             nPoints++;
-                    } else
+                    }
+                    else
                         nPoints++;
                 }
             }
@@ -480,17 +540,20 @@ namespace ygz {
         return nPoints;
     }
 
-    vector<MapPoint *> KeyFrame::GetMapPointMatches() {
+    vector<MapPoint *> KeyFrame::GetMapPointMatches()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return mvpMapPoints;
     }
 
-    MapPoint *KeyFrame::GetMapPoint(const size_t &idx) {
+    MapPoint *KeyFrame::GetMapPoint(const size_t &idx)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return mvpMapPoints[idx];
     }
 
-    void KeyFrame::UpdateConnections() {
+    void KeyFrame::UpdateConnections()
+    {
         map<KeyFrame *, int> KFcounter;
 
         vector<MapPoint *> vpMP;
@@ -500,9 +563,10 @@ namespace ygz {
             vpMP = mvpMapPoints;
         }
 
-        //For all map points in keyframe check in which other keyframes are they seen
-        //Increase counter for those keyframes
-        for (vector<MapPoint *>::iterator vit = vpMP.begin(), vend = vpMP.end(); vit != vend; vit++) {
+        // For all map points in keyframe check in which other keyframes are they seen
+        // Increase counter for those keyframes
+        for (vector<MapPoint *>::iterator vit = vpMP.begin(), vend = vpMP.end(); vit != vend; vit++)
+        {
             MapPoint *pMP = *vit;
 
             if (!pMP)
@@ -514,7 +578,8 @@ namespace ygz {
             map<KeyFrame *, size_t> observations = pMP->GetObservations();
 
             for (map<KeyFrame *, size_t>::iterator mit = observations.begin(), mend = observations.end();
-                 mit != mend; mit++) {
+                 mit != mend; mit++)
+            {
                 if (mit->first->mnId == mnId)
                     continue;
                 KFcounter[mit->first]++;
@@ -525,36 +590,41 @@ namespace ygz {
         if (KFcounter.empty())
             return;
 
-        //If the counter is greater than threshold add connection
-        //In case no keyframe counter is over threshold add the one with maximum counter
-        // 共视超过15个点就被认为是有connection了。。。然而直接法中共视超多的
+        // If the counter is greater than threshold add connection
+        // In case no keyframe counter is over threshold add the one with maximum counter
+        //  共视超过15个点就被认为是有connection了。。。然而直接法中共视超多的
         int nmax = 0;
         KeyFrame *pKFmax = NULL;
         int th = 15;
         // int th = 30;
 
-        vector<pair<int, KeyFrame *> > vPairs;
+        vector<pair<int, KeyFrame *>> vPairs;
         vPairs.reserve(KFcounter.size());
-        for (map<KeyFrame *, int>::iterator mit = KFcounter.begin(), mend = KFcounter.end(); mit != mend; mit++) {
-            if (mit->second > nmax) {
+        for (map<KeyFrame *, int>::iterator mit = KFcounter.begin(), mend = KFcounter.end(); mit != mend; mit++)
+        {
+            if (mit->second > nmax)
+            {
                 nmax = mit->second;
                 pKFmax = mit->first;
             }
-            if (mit->second >= th) {
+            if (mit->second >= th)
+            {
                 vPairs.push_back(make_pair(mit->second, mit->first));
                 (mit->first)->AddConnection(this, mit->second);
             }
         }
 
-        if (vPairs.empty()) {
+        if (vPairs.empty())
+        {
             vPairs.push_back(make_pair(nmax, pKFmax));
             pKFmax->AddConnection(this, nmax);
         }
 
         sort(vPairs.begin(), vPairs.end());
-        list < KeyFrame * > lKFs;
+        list<KeyFrame *> lKFs;
         list<int> lWs;
-        for (size_t i = 0; i < vPairs.size(); i++) {
+        for (size_t i = 0; i < vPairs.size(); i++)
+        {
             lKFs.push_front(vPairs[i].second);
             lWs.push_front(vPairs[i].first);
         }
@@ -567,81 +637,96 @@ namespace ygz {
             mvpOrderedConnectedKeyFrames = vector<KeyFrame *>(lKFs.begin(), lKFs.end());
             mvOrderedWeights = vector<int>(lWs.begin(), lWs.end());
 
-            if (mbFirstConnection && mnId != 0) {
+            if (mbFirstConnection && mnId != 0)
+            {
                 mpParent = mvpOrderedConnectedKeyFrames.front();
                 mpParent->AddChild(this);
                 mbFirstConnection = false;
             }
-
         }
     }
 
-    void KeyFrame::AddChild(KeyFrame *pKF) {
+    void KeyFrame::AddChild(KeyFrame *pKF)
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         mspChildrens.insert(pKF);
     }
 
-    void KeyFrame::EraseChild(KeyFrame *pKF) {
+    void KeyFrame::EraseChild(KeyFrame *pKF)
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         mspChildrens.erase(pKF);
     }
 
-    void KeyFrame::ChangeParent(KeyFrame *pKF) {
+    void KeyFrame::ChangeParent(KeyFrame *pKF)
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         mpParent = pKF;
         pKF->AddChild(this);
     }
 
-    set<KeyFrame *> KeyFrame::GetChilds() {
+    set<KeyFrame *> KeyFrame::GetChilds()
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mspChildrens;
     }
 
-    KeyFrame *KeyFrame::GetParent() {
+    KeyFrame *KeyFrame::GetParent()
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mpParent;
     }
 
-    bool KeyFrame::hasChild(KeyFrame *pKF) {
+    bool KeyFrame::hasChild(KeyFrame *pKF)
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mspChildrens.count(pKF);
     }
 
-    void KeyFrame::AddLoopEdge(KeyFrame *pKF) {
+    void KeyFrame::AddLoopEdge(KeyFrame *pKF)
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         mbNotErase = true;
         mspLoopEdges.insert(pKF);
     }
 
-    set<KeyFrame *> KeyFrame::GetLoopEdges() {
+    set<KeyFrame *> KeyFrame::GetLoopEdges()
+    {
         unique_lock<mutex> lockCon(mMutexConnections);
         return mspLoopEdges;
     }
 
-    void KeyFrame::SetNotErase() {
+    void KeyFrame::SetNotErase()
+    {
         unique_lock<mutex> lock(mMutexConnections);
         mbNotErase = true;
     }
 
-    void KeyFrame::SetErase() {
+    void KeyFrame::SetErase()
+    {
         {
             unique_lock<mutex> lock(mMutexConnections);
-            if (mspLoopEdges.empty()) {
+            if (mspLoopEdges.empty())
+            {
                 mbNotErase = false;
             }
         }
 
-        if (mbToBeErased) {
+        if (mbToBeErased)
+        {
             SetBadFlag();
         }
     }
 
-    void KeyFrame::SetBadFlag() {
+    void KeyFrame::SetBadFlag()
+    {
         // Test log
-        if (mbBad) {
+        if (mbBad)
+        {
             vector<KeyFrame *> vKFinMap = mpMap->GetAllKeyFrames();
             std::set<KeyFrame *> KFinMap(vKFinMap.begin(), vKFinMap.end());
-            if (KFinMap.count(this)) {
+            if (KFinMap.count(this))
+            {
                 mpMap->EraseKeyFrame(this);
             }
             mpKeyFrameDB->erase(this);
@@ -650,10 +735,13 @@ namespace ygz {
 
         {
             unique_lock<mutex> lock(mMutexConnections);
-            if (mnId == 0) {
+            if (mnId == 0)
+            {
                 LOG(INFO) << "Don't erase the first key frame" << endl;
                 return;
-            } else if (mbNotErase) {
+            }
+            else if (mbNotErase)
+            {
                 mbToBeErased = true;
                 return;
             }
@@ -679,7 +767,8 @@ namespace ygz {
 
             // Assign at each iteration one children with a parent (the pair with highest covisibility weight)
             // Include that children as new parent candidate for the rest
-            while (!mspChildrens.empty()) {
+            while (!mspChildrens.empty())
+            {
                 bool bContinue = false;
 
                 int max = -1;
@@ -687,19 +776,24 @@ namespace ygz {
                 KeyFrame *pP;
 
                 for (set<KeyFrame *>::iterator sit = mspChildrens.begin(), send = mspChildrens.end();
-                     sit != send; sit++) {
+                     sit != send; sit++)
+                {
                     KeyFrame *pKF = *sit;
                     if (pKF->isBad())
                         continue;
 
                     // Check if a parent candidate is connected to the keyframe
                     vector<KeyFrame *> vpConnected = pKF->GetVectorCovisibleKeyFrames();
-                    for (size_t i = 0, iend = vpConnected.size(); i < iend; i++) {
+                    for (size_t i = 0, iend = vpConnected.size(); i < iend; i++)
+                    {
                         for (set<KeyFrame *>::iterator spcit = sParentCandidates.begin(), spcend = sParentCandidates.end();
-                             spcit != spcend; spcit++) {
-                            if (vpConnected[i]->mnId == (*spcit)->mnId) {
+                             spcit != spcend; spcit++)
+                        {
+                            if (vpConnected[i]->mnId == (*spcit)->mnId)
+                            {
                                 int w = pKF->GetWeight(vpConnected[i]);
-                                if (w > max) {
+                                if (w > max)
+                                {
                                     pC = pKF;
                                     pP = vpConnected[i];
                                     max = w;
@@ -710,17 +804,20 @@ namespace ygz {
                     }
                 }
 
-                if (bContinue) {
+                if (bContinue)
+                {
                     pC->ChangeParent(pP);
                     sParentCandidates.insert(pC);
                     mspChildrens.erase(pC);
-                } else
+                }
+                else
                     break;
             }
 
             // If a children has no covisibility links with any parent candidate, assign to the original parent of this KF
             if (!mspChildrens.empty())
-                for (set<KeyFrame *>::iterator sit = mspChildrens.begin(); sit != mspChildrens.end(); sit++) {
+                for (set<KeyFrame *>::iterator sit = mspChildrens.begin(); sit != mspChildrens.end(); sit++)
+                {
                     (*sit)->ChangeParent(mpParent);
                 }
 
@@ -736,8 +833,9 @@ namespace ygz {
                 pNextKF->SetPrevKeyFrame(pPrevKF);
             SetPrevKeyFrame(NULL);
             SetNextKeyFrame(NULL);
-            // TODO
-            if (pPrevKF && pNextKF) {
+            // TODO:
+            if (pPrevKF && pNextKF)
+            {
                 // Update IMUData for NextKF
                 pNextKF->AppendIMUDataToFront(this);
                 // Re-compute pre-integrator
@@ -747,21 +845,23 @@ namespace ygz {
             mbBad = true;
         }
 
-
         mpMap->EraseKeyFrame(this);
         mpKeyFrameDB->erase(this);
     }
 
-    bool KeyFrame::isBad() {
+    bool KeyFrame::isBad()
+    {
         unique_lock<mutex> lock(mMutexConnections);
         return mbBad;
     }
 
-    void KeyFrame::EraseConnection(KeyFrame *pKF) {
+    void KeyFrame::EraseConnection(KeyFrame *pKF)
+    {
         bool bUpdate = false;
         {
             unique_lock<mutex> lock(mMutexConnections);
-            if (mConnectedKeyFrameWeights.count(pKF)) {
+            if (mConnectedKeyFrameWeights.count(pKF))
+            {
                 mConnectedKeyFrameWeights.erase(pKF);
                 bUpdate = true;
             }
@@ -771,30 +871,34 @@ namespace ygz {
             UpdateBestCovisibles();
     }
 
-    vector<size_t> KeyFrame::GetFeaturesInArea(const float &x, const float &y, const float &r) const {
+    vector<size_t> KeyFrame::GetFeaturesInArea(const float &x, const float &y, const float &r) const
+    {
         vector<size_t> vIndices;
         vIndices.reserve(N);
 
-        const int nMinCellX = max(0, (int) floor((x - mnMinX - r) * mfGridElementWidthInv));
+        const int nMinCellX = max(0, (int)floor((x - mnMinX - r) * mfGridElementWidthInv));
         if (nMinCellX >= mnGridCols)
             return vIndices;
 
-        const int nMaxCellX = min((int) mnGridCols - 1, (int) ceil((x - mnMinX + r) * mfGridElementWidthInv));
+        const int nMaxCellX = min((int)mnGridCols - 1, (int)ceil((x - mnMinX + r) * mfGridElementWidthInv));
         if (nMaxCellX < 0)
             return vIndices;
 
-        const int nMinCellY = max(0, (int) floor((y - mnMinY - r) * mfGridElementHeightInv));
+        const int nMinCellY = max(0, (int)floor((y - mnMinY - r) * mfGridElementHeightInv));
         if (nMinCellY >= mnGridRows)
             return vIndices;
 
-        const int nMaxCellY = min((int) mnGridRows - 1, (int) ceil((y - mnMinY + r) * mfGridElementHeightInv));
+        const int nMaxCellY = min((int)mnGridRows - 1, (int)ceil((y - mnMinY + r) * mfGridElementHeightInv));
         if (nMaxCellY < 0)
             return vIndices;
 
-        for (int ix = nMinCellX; ix <= nMaxCellX; ix++) {
-            for (int iy = nMinCellY; iy <= nMaxCellY; iy++) {
+        for (int ix = nMinCellX; ix <= nMaxCellX; ix++)
+        {
+            for (int iy = nMinCellY; iy <= nMaxCellY; iy++)
+            {
                 const vector<size_t> vCell = mGrid[ix][iy];
-                for (size_t j = 0, jend = vCell.size(); j < jend; j++) {
+                for (size_t j = 0, jend = vCell.size(); j < jend; j++)
+                {
                     const cv::KeyPoint &kpUn = mvKeys[vCell[j]];
                     const float distx = kpUn.pt.x - x;
                     const float disty = kpUn.pt.y - y;
@@ -808,13 +912,16 @@ namespace ygz {
         return vIndices;
     }
 
-    bool KeyFrame::IsInImage(const float &x, const float &y) const {
+    bool KeyFrame::IsInImage(const float &x, const float &y) const
+    {
         return (x >= mnMinX && x < mnMaxX && y >= mnMinY && y < mnMaxY);
     }
 
-    Vector3f KeyFrame::UnprojectStereo(int i) {
+    Vector3f KeyFrame::UnprojectStereo(int i)
+    {
         const float z = mvDepth[i];
-        if (z > 0) {
+        if (z > 0)
+        {
             const float u = mvKeys[i].pt.x;
             const float v = mvKeys[i].pt.y;
             const float x = (u - cx) * z * invfx;
@@ -823,11 +930,13 @@ namespace ygz {
 
             unique_lock<mutex> lock(mMutexPose);
             return Twc * x3Dc;
-        } else
+        }
+        else
             return Vector3f(0, 0, 0);
     }
 
-    float KeyFrame::ComputeSceneMedianDepth(const int q) {
+    float KeyFrame::ComputeSceneMedianDepth(const int q)
+    {
         vector<MapPoint *> vpMapPoints;
         SE3f Tcw_;
         {
@@ -843,8 +952,10 @@ namespace ygz {
         Vector3f Rcw2 = r.head<3>();
         float zcw = Tcw_.matrix()(2, 3);
 
-        for (int i = 0; i < N; i++) {
-            if (mvpMapPoints[i]) {
+        for (int i = 0; i < N; i++)
+        {
+            if (mvpMapPoints[i])
+            {
                 MapPoint *pMP = mvpMapPoints[i];
                 Vector3f x3Dw = pMP->GetWorldPos();
                 float z = Rcw2.dot(x3Dw) + zcw;
@@ -856,4 +967,4 @@ namespace ygz {
         return vDepths[(vDepths.size() - 1) / q];
     }
 
-} //namespace ygz
+} // namespace ygz

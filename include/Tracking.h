@@ -1,23 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef YGZ_TRACKING_H_
 #define YGZ_TRACKING_H_
@@ -30,15 +29,14 @@
 #include "MapDrawer.h"
 #include "SparseImageAlign.h"
 
-
 #include "IMU/imudata.h"
 #include "IMU/IMUPreintegrator.h"
 #include "IMU/configparam.h"
 
-
 // Tracking 线程
 // 改的最多的地方
-namespace ygz {
+namespace ygz
+{
 
     class Viewer;
 
@@ -52,7 +50,8 @@ namespace ygz {
 
     class System;
 
-    class Tracking {
+    class Tracking
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -83,9 +82,9 @@ namespace ygz {
         void InformOnlyTracking(const bool &flag);
 
     public:
-
         // Tracking states
-        enum eTrackingState {
+        enum eTrackingState
+        {
             SYSTEM_NOT_READY = -1,
             NO_IMAGES_YET = 0,
             NOT_INITIALIZED = 1,
@@ -106,14 +105,14 @@ namespace ygz {
         // Initialization Variables (Monocular)
         // 初始化时前两帧相关变量
         std::vector<int> mvIniLastMatches;
-        std::vector<int> mvIniMatches;// 跟踪初始化时前两帧之间的匹配
+        std::vector<int> mvIniMatches; // 跟踪初始化时前两帧之间的匹配
         std::vector<cv::Point2f> mvbPrevMatched;
         std::vector<Vector3f> mvIniP3D;
         Frame mInitialFrame;
 
         // Lists used to recover the full camera trajectory at the end of the execution.
         // Basically we store the reference keyframe for each frame and its relative transformation
-        list <SE3f> mlRelativeFramePoses;
+        list<SE3f> mlRelativeFramePoses;
         list<KeyFrame *> mlpReferences;
         list<double> mlFrameTimes;
         list<bool> mlbLost;
@@ -123,7 +122,7 @@ namespace ygz {
 
         void Reset();
 
-        ConfigParam *mpParams = nullptr;      // VIO params
+        ConfigParam *mpParams = nullptr; // VIO params
 
         // Whether use IMU
         bool mbUseIMU = false;
@@ -149,9 +148,11 @@ namespace ygz {
 
         IMUPreintegrator GetIMUPreIntSinceLastFrame(Frame *pCurF, Frame *pLastF);
 
+        // for test result analyze
+        // int mnORBTimes;
+        int mnLostTimes;
 
     protected:
-
         // Main tracking function. It is independent of the input sensor.
         void Track();
 
@@ -203,7 +204,7 @@ namespace ygz {
          * @param[in] observations 地图点的观测数据
          * @param[in] n 选取的数量
          */
-        vector<pair<KeyFrame *, size_t> > SelectNearestKeyframe(const map<KeyFrame *, size_t> &observations, int n = 5);
+        vector<pair<KeyFrame *, size_t>> SelectNearestKeyframe(const map<KeyFrame *, size_t> &observations, int n = 5);
 
         bool NeedNewKeyFrame();
 
@@ -215,49 +216,49 @@ namespace ygz {
         // "zero-drift" localization to the map.
         bool mbVO = false;
 
-        //Other Thread Pointers
+        // Other Thread Pointers
         LocalMapping *mpLocalMapper = nullptr;
         LoopClosing *mpLoopClosing = nullptr;
 
-        //ORB
-        // orb特征提取器，不管单目还是双目，mpORBextractorLeft都要用到
-        // 如果是双目，则要用到mpORBextractorRight
-        // 如果是单目，在初始化的时候使用mpIniORBextractor而不是mpORBextractorLeft，
-        // mpIniORBextractor属性中提取的特征点个数是mpORBextractorLeft的两倍
+        // ORB
+        //  orb特征提取器，不管单目还是双目，mpORBextractorLeft都要用到
+        //  如果是双目，则要用到mpORBextractorRight
+        //  如果是单目，在初始化的时候使用mpIniORBextractor而不是mpORBextractorLeft，
+        //  mpIniORBextractor属性中提取的特征点个数是mpORBextractorLeft的两倍
         ORBextractor *mpORBextractorLeft = nullptr, *mpORBextractorRight = nullptr;
         ORBextractor *mpIniORBextractor = nullptr;
 
-        //BoW
+        // BoW
         ORBVocabulary *mpORBVocabulary = nullptr;
         KeyFrameDatabase *mpKeyFrameDB = nullptr;
 
         // Initalization (only for monocular)
         Initializer *mpInitializer = nullptr;
 
-        //Local Map
+        // Local Map
         KeyFrame *mpReferenceKF = nullptr;
         std::vector<KeyFrame *> mvpLocalKeyFrames;
         std::vector<MapPoint *> mvpLocalMapPoints;
-        set<MapPoint *> mvpDirectMapPointsCache;     // 缓存之前匹配到的地图点
-        int mnCacheHitTh = 150;   // cache 命中点的阈值
+        set<MapPoint *> mvpDirectMapPointsCache; // 缓存之前匹配到的地图点
+        int mnCacheHitTh = 150;                  // cache 命中点的阈值
 
         // System
         System *mpSystem = nullptr;
 
-        //Drawers
+        // Drawers
         Viewer *mpViewer = nullptr;
         FrameDrawer *mpFrameDrawer = nullptr;
         MapDrawer *mpMapDrawer = nullptr;
 
-        //Map
+        // Map
         Map *mpMap = nullptr;
 
-        //Calibration matrix
+        // Calibration matrix
         Matrix3f mK = Matrix3f::Identity();
         cv::Mat mDistCoef;
         float mbf = 0;
 
-        //New KeyFrame rules (according to fps)
+        // New KeyFrame rules (according to fps)
         int mMinFrames = 0;
         int mMaxFrames = 0;
 
@@ -269,30 +270,30 @@ namespace ygz {
         // For RGB-D inputs only. For some datasets (e.g. TUM) the depthmap values are scaled.
         float mDepthMapFactor = 1;
 
-        //Current matches in frame
+        // Current matches in frame
         int mnMatchesInliers = 0;
 
-        //Last Frame, KeyFrame and Relocalisation Info
+        // Last Frame, KeyFrame and Relocalisation Info
         KeyFrame *mpLastKeyFrame = nullptr;
         Frame mLastFrame;
         unsigned int mnLastKeyFrameId;
         unsigned int mnLastRelocFrameId;
 
-        //Motion Model
+        // Motion Model
         SE3f mVelocity;
         bool mbVelocitySet = false;
 
-        //Color order (true RGB, false BGR, ignored if grayscale)
+        // Color order (true RGB, false BGR, ignored if grayscale)
         bool mbRGB = false;
 
-        list<MapPoint *> mlpTemporalPoints;  // 双目和RGBD中会生成一些额外的地图点以使匹配更加稳定
+        list<MapPoint *> mlpTemporalPoints; // 双目和RGBD中会生成一些额外的地图点以使匹配更加稳定
 
         // sparse image alignment
         SparseImgAlign *mpAlign = nullptr;
 
-        bool mbDirectFailed = false;    // 直接方法是否失败了？
+        bool mbDirectFailed = false; // 直接方法是否失败了？
     };
 
-} //namespace ygz
+} // namespace ygz
 
 #endif // TRACKING_H

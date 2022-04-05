@@ -3,11 +3,13 @@
 
 #include "Common.h"
 
-namespace ygz {
+namespace ygz
+{
 
     using namespace Eigen;
 
-    class IMUData {
+    class IMUData
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -39,9 +41,9 @@ namespace ygz {
         static double getAccBiasRW2(void) { return _accBiasRw2; }
 
         // Raw data of imu
-        Vector3d _g;    //gyr data
-        Vector3d _a;    //acc data
-        double _t;      //timestamp
+        Vector3d _g; // gyr data
+        Vector3d _a; // acc data
+        double _t;   // timestamp
     };
 
 }

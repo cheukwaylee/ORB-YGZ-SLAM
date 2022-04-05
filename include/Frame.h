@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef YGZ_FRAME_H_
 #define YGZ_FRAME_H_
@@ -32,11 +32,12 @@
 #include "IMU/NavState.h"
 #include "IMU/IMUPreintegrator.h"
 
-namespace ygz {
+namespace ygz
+{
 
-    // 格点大小，这个最好能随着图像大小做一些改变
-    #define FRAME_GRID_ROWS 48
-    #define FRAME_GRID_COLS 64
+// 格点大小，这个最好能随着图像大小做一些改变
+#define FRAME_GRID_ROWS 48
+#define FRAME_GRID_COLS 64
 
     class MapPoint;
 
@@ -44,15 +45,18 @@ namespace ygz {
 
     class ORBextractor;
 
-    class Frame {
+    class Frame
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-        typedef enum {
-            Monocular = 0, Stereo, RGBD
+        typedef enum
+        {
+            Monocular = 0,
+            Stereo,
+            RGBD
         } SensorType;
 
     public:
-
         Frame();
 
         // Copy constructor.
@@ -98,12 +102,14 @@ namespace ygz {
         void UpdatePoseMatrices();
 
         // Returns the camera center.
-        inline Vector3f GetCameraCenter() {
+        inline Vector3f GetCameraCenter()
+        {
             return mOw;
         }
 
         // Returns inverse of rotation
-        inline Matrix3f GetRotationInverse() {
+        inline Matrix3f GetRotationInverse()
+        {
             return mRwc;
         }
 
@@ -143,34 +149,38 @@ namespace ygz {
         void AssignFeaturesToGrid();
 
         // coordinate transform: world, camera, pixel
-        inline Vector3f World2Camera(const Vector3f &p_w, const SE3f &T_c_w) const {
+        inline Vector3f World2Camera(const Vector3f &p_w, const SE3f &T_c_w) const
+        {
             return T_c_w * p_w;
         }
 
-        inline Vector3f Camera2World(const Vector3f &p_c, const SE3f &T_c_w) const {
+        inline Vector3f Camera2World(const Vector3f &p_c, const SE3f &T_c_w) const
+        {
             return T_c_w.inverse() * p_c;
         }
 
-        inline Vector2f Camera2Pixel(const Vector3f &p_c) const {
+        inline Vector2f Camera2Pixel(const Vector3f &p_c) const
+        {
             return Vector2f(
-                    fx * p_c(0, 0) / p_c(2, 0) + cx,
-                    fy * p_c(1, 0) / p_c(2, 0) + cy
-            );
+                fx * p_c(0, 0) / p_c(2, 0) + cx,
+                fy * p_c(1, 0) / p_c(2, 0) + cy);
         }
 
-        inline Vector3f Pixel2Camera(const Vector2f &p_p, double depth = 1) const {
+        inline Vector3f Pixel2Camera(const Vector2f &p_p, double depth = 1) const
+        {
             return Vector3f(
-                    (p_p(0, 0) - cx) * depth / fx,
-                    (p_p(1, 0) - cy) * depth / fy,
-                    depth
-            );
+                (p_p(0, 0) - cx) * depth / fx,
+                (p_p(1, 0) - cy) * depth / fy,
+                depth);
         }
 
-        inline Vector3f Pixel2World(const Vector2f &p_p, const SE3f &T_c_w, double depth = 1) const {
+        inline Vector3f Pixel2World(const Vector2f &p_p, const SE3f &T_c_w, double depth = 1) const
+        {
             return Camera2World(Pixel2Camera(p_p, depth), T_c_w);
         }
 
-        Vector2f World2Pixel(const Vector3f &p_w, const SE3f &T_c_w) const {
+        Vector2f World2Pixel(const Vector3f &p_w, const SE3f &T_c_w) const
+        {
             return Camera2Pixel(World2Camera(p_w, T_c_w));
         }
 
@@ -191,12 +201,14 @@ namespace ygz {
         void UpdateNavState(const IMUPreintegrator &imupreint, const Vector3d &gw);
 
         // get navigation state
-        NavState GetNavState(void) const {
+        NavState GetNavState(void) const
+        {
             return mNavState;
         }
 
         // set navigation state
-        void SetNavState(const NavState &ns) {
+        void SetNavState(const NavState &ns)
+        {
             mNavState = ns;
         }
 
@@ -206,18 +218,17 @@ namespace ygz {
         // set accelerate bias
         void SetNavStateBiasAcc(const Vector3d &ba);
 
-
     public:
         // Vocabulary used for relocalization.
-        ORBVocabulary *mpORBvocabulary = nullptr;     // 字典
+        ORBVocabulary *mpORBvocabulary = nullptr; // 字典
 
         // Feature extractor. The right is used only in the stereo case.
         ORBextractor *mpORBextractorLeft = nullptr;
-        ORBextractor *mpORBextractorRight = nullptr;     // 两个图像的特征提取器
+        ORBextractor *mpORBextractorRight = nullptr; // 两个图像的特征提取器
 
-        cv::Mat mImGray;    // 灰度图/双目左图
-        cv::Mat mImRight;   // 双目右图
-        cv::Mat mImDepth;   // RGBD深度图
+        cv::Mat mImGray;  // 灰度图/双目左图
+        cv::Mat mImRight; // 双目右图
+        cv::Mat mImDepth; // RGBD深度图
 
         // 图像金字塔
         vector<cv::Mat> mvImagePyramid;
@@ -235,19 +246,19 @@ namespace ygz {
         static float invfx;
         static float invfy;
 
-        static Mat map1, map2;  // for undistortion
-        cv::Mat mDistCoef;  // 畸变参数
-        static bool mbNeedUndistort;        // 如果传进来的图像是去过畸变的，就没必要再做一次
+        static Mat map1, map2;       // for undistortion
+        cv::Mat mDistCoef;           // 畸变参数
+        static bool mbNeedUndistort; // 如果传进来的图像是去过畸变的，就没必要再做一次
 
         // Stereo baseline multiplied by fx.
-        float mbf = 0;       // 双目中的基线乘焦距
+        float mbf = 0; // 双目中的基线乘焦距
 
         // Stereo baseline in meters.
-        float mb;                   // 基线
+        float mb; // 基线
 
         // Threshold close/far points. Close points are inserted from 1 view.
         // Far points are inserted as in the monocular case from 2 views.
-        float mThDepth;             // 远点的阈值
+        float mThDepth; // 远点的阈值
 
         // Number of KeyPoints.
         int N; ///< KeyPoints数量
@@ -258,10 +269,10 @@ namespace ygz {
         // mvKeys:原始左图像提取出的特征点
         // mvKeysRight:原始右图像提取出的特征点
         std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
-        vector<int> mvMatchedFrom;  // 标识每个特征点是从哪个Keyframe选取的
+        vector<int> mvMatchedFrom; // 标识每个特征点是从哪个Keyframe选取的
 
         // 是否已经提取了特征
-        bool mbFeatureExtracted = false;    // flag to indicate if the ORB features are detected
+        bool mbFeatureExtracted = false; // flag to indicate if the ORB features are detected
 
         // Corresponding stereo coordinate and depth for each keypoint.
         // "Monocular" keypoints have a negative value.
@@ -296,29 +307,29 @@ namespace ygz {
         // #define FRAME_GRID_ROWS 48
         // #define FRAME_GRID_COLS 64
         std::vector<std::size_t> mGrid[FRAME_GRID_COLS][FRAME_GRID_ROWS];
-        bool mbGridSet = false;       // Grid是否已经被设置
+        bool mbGridSet = false; // Grid是否已经被设置
 
         // Camera pose.
-        SE3f mTcw;  // World 到 Camera
-        bool mbPoseSet = false;      // Pose 是否已经设置
+        SE3f mTcw;              // World 到 Camera
+        bool mbPoseSet = false; // Pose 是否已经设置
 
         // Current and Next Frame id.
         static long unsigned int nNextId; ///< Next Frame id.
-        long unsigned int mnId = 0; ///< Current Frame id.
+        long unsigned int mnId = 0;       ///< Current Frame id.
 
         // Reference Keyframe.
-        KeyFrame *mpReferenceKF = nullptr;//指针，指向参考关键帧
+        KeyFrame *mpReferenceKF = nullptr; //指针，指向参考关键帧
 
         // Scale pyramid info.
-        int mnScaleLevels = 0;//图像提金字塔的层数
-        float mfScaleFactor = 0;//图像提金字塔的尺度因子
-        float mfLogScaleFactor; // 对数scale缩放值
+        int mnScaleLevels = 0;   //图像提金字塔的层数
+        float mfScaleFactor = 0; //图像提金字塔的尺度因子
+        float mfLogScaleFactor;  // 对数scale缩放值
 
         // 各层金字塔的参数
-        vector<float> mvScaleFactors;               // 缩放倍数
-        vector<float> mvInvScaleFactors;            // 倒数
-        vector<float> mvLevelSigma2;                // 平方
-        vector<float> mvInvLevelSigma2;             // 倒数平方
+        vector<float> mvScaleFactors;    // 缩放倍数
+        vector<float> mvInvScaleFactors; // 倒数
+        vector<float> mvLevelSigma2;     // 平方
+        vector<float> mvInvLevelSigma2;  // 倒数平方
 
         // Undistorted Image Bounds (computed once).
         // 用于确定画格子时的边界
@@ -345,12 +356,12 @@ namespace ygz {
         Matrix3f mRcw; ///< Rotation from world to camera
         Vector3f mtcw; ///< Translation from world to camera
         Matrix3f mRwc; ///< Rotation from camera to world
-        Vector3f mOw; //==mtwc,Translation from camera to world
+        Vector3f mOw;  //==mtwc,Translation from camera to world
 
         // IMU 用的量，Rwb, twb, v, ba, bg,共15维，存储在NavState当中
         NavState mNavState; // Navigation state used in VIO
     };
 
-}// namespace ygz
+} // namespace ygz
 
 #endif // FRAME_H

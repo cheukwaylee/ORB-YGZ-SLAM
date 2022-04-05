@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef YGZ_LOCALMAPPING_H_
 #define YGZ_LOCALMAPPING_H_
@@ -25,7 +25,8 @@
 
 // 后端建图和优化线程
 
-namespace ygz {
+namespace ygz
+{
 
     class Tracking;
 
@@ -41,12 +42,13 @@ namespace ygz {
 
     class MapPoint;
 
-    class LocalMapping {
+    class LocalMapping
+    {
     public:
-        ConfigParam *mpParams= nullptr; // IMU配置参数
+        ConfigParam *mpParams = nullptr; // IMU配置参数
         bool mbUseIMU;
 
-        std::thread *mptLocalMappingVIOInit =nullptr;   // 单目 初始化线程
+        std::thread *mptLocalMappingVIOInit = nullptr; // 单目 初始化线程
 
         // KeyFrames in Local Window, for Local BA
         // Insert in ProcessNewKeyFrame()
@@ -120,12 +122,14 @@ namespace ygz {
         std::mutex mMutexCopyInitKFs;
         bool mbCopyInitKFs;
 
-        bool GetFlagCopyInitKFs() {
+        bool GetFlagCopyInitKFs()
+        {
             unique_lock<mutex> lock(mMutexCopyInitKFs);
             return mbCopyInitKFs;
         }
 
-        void SetFlagCopyInitKFs(bool flag) {
+        void SetFlagCopyInitKFs(bool flag)
+        {
             unique_lock<mutex> lock(mMutexCopyInitKFs);
             mbCopyInitKFs = flag;
         }
@@ -167,13 +171,13 @@ namespace ygz {
 
         bool isFinished();
 
-        int KeyframesInQueue() {
+        int KeyframesInQueue()
+        {
             unique_lock<std::mutex> lock(mMutexNewKFs);
             return mlNewKeyFrames.size();
         }
 
     protected:
-
         bool CheckNewKeyFrames();
 
         void ProcessNewKeyFrame();
@@ -203,14 +207,14 @@ namespace ygz {
         bool mbFinished;
         std::mutex mMutexFinish;
 
-        Map *mpMap =nullptr;
+        Map *mpMap = nullptr;
 
-        LoopClosing *mpLoopCloser =nullptr;
-        Tracking *mpTracker =nullptr;
+        LoopClosing *mpLoopCloser = nullptr;
+        Tracking *mpTracker = nullptr;
 
         std::list<KeyFrame *> mlNewKeyFrames; ///< 等待处理的关键帧列表
 
-        KeyFrame *mpCurrentKeyFrame =nullptr;
+        KeyFrame *mpCurrentKeyFrame = nullptr;
 
         std::list<MapPoint *> mlpRecentAddedMapPoints;
 
@@ -226,6 +230,6 @@ namespace ygz {
         std::mutex mMutexAccept;
     };
 
-} //namespace ygz
+} // namespace ygz
 
 #endif // LOCALMAPPING_H

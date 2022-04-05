@@ -4,9 +4,10 @@
 #include "Common.h"
 
 // 有关align部分的算法
-// This part is moved from rpg_SVO with modification to support ygz 
+// This part is moved from rpg_SVO with modification to support ygz
 
-namespace ygz {
+namespace ygz
+{
 
     /**
      * @brief align a pixel with reference image patch
@@ -18,12 +19,12 @@ namespace ygz {
      * @return True if successful
      */
     bool Align2D(
-            const cv::Mat &cur_img,
-            uint8_t *ref_patch_with_border,
-            uint8_t *ref_patch,
-            const int n_iter,
-            Vector2f &cur_px_estimate,
-            bool no_simd = false);
+        const cv::Mat &cur_img,
+        uint8_t *ref_patch_with_border,
+        uint8_t *ref_patch,
+        const int n_iter,
+        Vector2f &cur_px_estimate,
+        bool no_simd = false);
 
 }
 

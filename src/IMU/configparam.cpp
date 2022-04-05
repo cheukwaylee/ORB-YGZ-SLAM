@@ -1,6 +1,7 @@
 #include "configparam.h"
 
-namespace ygz {
+namespace ygz
+{
     double ConfigParam::_g = 9.810;
 
     Sophus::SE3d ConfigParam::_SE3Tbc = Sophus::SE3d();
@@ -15,16 +16,18 @@ namespace ygz {
     double ConfigParam::_nVINSInitTime = 15;
     bool ConfigParam::_bUseIMU = false;
 
-    ConfigParam::ConfigParam(std::string configfile) {
+    ConfigParam::ConfigParam(std::string configfile)
+    {
         cv::FileStorage fSettings(configfile, cv::FileStorage::READ);
 
-        std::cout << std::endl << std::endl << "Parameters: " << std::endl;
+        std::cout << std::endl
+                  << std::endl
+                  << "Parameters: " << std::endl;
 
         _testDiscardTime = fSettings["test.DiscardTime"];
         _nVINSInitTime = fSettings["test.VINSInitTime"];
         std::cout << "VINS initialize time: " << _nVINSInitTime << std::endl;
         std::cout << "Discart time in test data: " << _testDiscardTime << std::endl;
-
 
         fSettings["test.InitVIOTmpPath"] >> _tmpFilePath;
         std::cout << "save tmp file in " << _tmpFilePath << std::endl;
@@ -46,8 +49,8 @@ namespace ygz {
             cv::FileNode Tbc_ = fSettings["Camera.Tbc"];
             Eigen::Matrix<double, 3, 3> R;
             R << Tbc_[0], Tbc_[1], Tbc_[2],
-                    Tbc_[4], Tbc_[5], Tbc_[6],
-                    Tbc_[8], Tbc_[9], Tbc_[10];
+                Tbc_[4], Tbc_[5], Tbc_[6],
+                Tbc_[8], Tbc_[9], Tbc_[10];
             Eigen::Quaterniond qr(R);
             R = qr.normalized().toRotationMatrix();
             Eigen::Matrix<double, 3, 1> t(Tbc_[3], Tbc_[7], Tbc_[11]);
@@ -69,9 +72,15 @@ namespace ygz {
                     _MatTcb.at<float>(i, j) = _EigTcb(i, j);
 
             // Tbc_[0], Tbc_[1], Tbc_[2], Tbc_[3], Tbc_[4], Tbc_[5], Tbc_[6], Tbc_[7], Tbc_[8], Tbc_[9], Tbc_[10], Tbc_[11], Tbc_[12], Tbc_[13], Tbc_[14], Tbc_[15];
-            std::cout << "Tbc inited:" << std::endl << _EigTbc << std::endl << _MatTbc << std::endl;
-            std::cout << "Tcb inited:" << std::endl << _EigTcb << std::endl << _MatTcb << std::endl;
-            std::cout << "Tbc*Tcb:" << std::endl << _EigTbc * _EigTcb << std::endl << _MatTbc * _MatTcb << std::endl;
+            std::cout << "Tbc inited:" << std::endl
+                      << _EigTbc << std::endl
+                      << _MatTbc << std::endl;
+            std::cout << "Tcb inited:" << std::endl
+                      << _EigTcb << std::endl
+                      << _MatTcb << std::endl;
+            std::cout << "Tbc*Tcb:" << std::endl
+                      << _EigTbc * _EigTcb << std::endl
+                      << _MatTbc * _MatTcb << std::endl;
         }
 
         {
@@ -85,35 +94,43 @@ namespace ygz {
         std::cout << "whether use IMU 0/1: " << _bUseIMU << std::endl;
     }
 
-    std::string ConfigParam::getTmpFilePath() {
+    std::string ConfigParam::getTmpFilePath()
+    {
         return _tmpFilePath;
     }
 
-    Eigen::Matrix4d ConfigParam::GetEigTbc() {
+    Eigen::Matrix4d ConfigParam::GetEigTbc()
+    {
         return _EigTbc;
     }
 
-    cv::Mat ConfigParam::GetMatTbc() {
+    cv::Mat ConfigParam::GetMatTbc()
+    {
         return _MatTbc.clone();
     }
 
-    Eigen::Matrix4d ConfigParam::GetEigT_cb() {
+    Eigen::Matrix4d ConfigParam::GetEigT_cb()
+    {
         return _EigTcb;
     }
 
-    cv::Mat ConfigParam::GetMatT_cb() {
+    cv::Mat ConfigParam::GetMatT_cb()
+    {
         return _MatTcb.clone();
     }
 
-    int ConfigParam::GetLocalWindowSize() {
+    int ConfigParam::GetLocalWindowSize()
+    {
         return _LocalWindowSize;
     }
 
-    double ConfigParam::GetImageDelayToIMU() {
+    double ConfigParam::GetImageDelayToIMU()
+    {
         return _ImageDelayToIMU;
     }
 
-    bool ConfigParam::GetAccMultiply9p8() {
+    bool ConfigParam::GetAccMultiply9p8()
+    {
         return _bAccMultiply9p8;
     }
 

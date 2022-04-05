@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "LocalMapping.h"
 #include "LoopClosing.h"
@@ -26,9 +26,11 @@
 
 #include <iomanip>
 
-namespace ygz {
+namespace ygz
+{
 
-    class KeyFrameInit {
+    class KeyFrameInit
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -39,16 +41,19 @@ namespace ygz {
         std::vector<IMUData> mvIMUData;
         Vector3d bg;
 
-
-        KeyFrameInit(KeyFrame &kf) :
-                mTimeStamp(kf.mTimeStamp), mpPrevKeyFrame(NULL), Twc(kf.GetPoseInverse().cast<double>()),
-                mIMUPreInt(kf.GetIMUPreInt()), mvIMUData(kf.GetVectorIMUData()), bg(0, 0, 0) {
+        KeyFrameInit(KeyFrame &kf) : mTimeStamp(kf.mTimeStamp), mpPrevKeyFrame(NULL), Twc(kf.GetPoseInverse().cast<double>()),
+                                     mIMUPreInt(kf.GetIMUPreInt()), mvIMUData(kf.GetVectorIMUData()), bg(0, 0, 0)
+        {
         }
 
-        void ComputePreInt(void) {
-            if (mpPrevKeyFrame == NULL) {
+        void ComputePreInt(void)
+        {
+            if (mpPrevKeyFrame == NULL)
+            {
                 return;
-            } else {
+            }
+            else
+            {
                 // Reset pre-integrator first
                 mIMUPreInt.reset();
 
@@ -59,16 +64,17 @@ namespace ygz {
                 {
                     const IMUData &imu = mvIMUData.front();
                     double dt = std::max(0., imu._t - mpPrevKeyFrame->mTimeStamp);
-                    mIMUPreInt.update(imu._g - bg, imu._a, dt);  // Acc bias not considered here
+                    mIMUPreInt.update(imu._g - bg, imu._a, dt); // Acc bias not considered here
                 }
                 // integrate each imu
-                for (size_t i = 0; i < mvIMUData.size(); i++) {
+                for (size_t i = 0; i < mvIMUData.size(); i++)
+                {
                     const IMUData &imu = mvIMUData[i];
                     double nextt;
                     if (i == mvIMUData.size() - 1)
-                        nextt = mTimeStamp;         // last IMU, next is this KeyFrame
+                        nextt = mTimeStamp; // last IMU, next is this KeyFrame
                     else
-                        nextt = mvIMUData[i + 1]._t;  // regular condition, next is imu data
+                        nextt = mvIMUData[i + 1]._t; // regular condition, next is imu data
 
                     // delta time
                     double dt = std::max(0., nextt - imu._t);
@@ -77,106 +83,126 @@ namespace ygz {
                 }
             }
         }
-
     };
 
-    bool LocalMapping::GetVINSIniting(void) {
+    bool LocalMapping::GetVINSIniting(void)
+    {
         unique_lock<mutex> lock(mMutexVINSIniting);
         return mbVINSIniting;
     }
 
-    void LocalMapping::SetVINSIniting(bool flag) {
+    void LocalMapping::SetVINSIniting(bool flag)
+    {
         unique_lock<mutex> lock(mMutexVINSIniting);
         mbVINSIniting = flag;
     }
 
-    bool LocalMapping::GetResetVINSInit(void) {
+    bool LocalMapping::GetResetVINSInit(void)
+    {
         unique_lock<mutex> lock(mMutexVINSIniting);
         return mbResetVINSInit;
     }
 
-    bool LocalMapping::SetResetVINSInit(bool flag) {
+    bool LocalMapping::SetResetVINSInit(bool flag)
+    {
         unique_lock<mutex> lock(mMutexVINSIniting);
         mbResetVINSInit = flag;
         return true;
     }
 
-    bool LocalMapping::GetUpdatingInitPoses(void) {
+    bool LocalMapping::GetUpdatingInitPoses(void)
+    {
         unique_lock<mutex> lock(mMutexUpdatingInitPoses);
         return mbUpdatingInitPoses;
     }
 
-    void LocalMapping::SetUpdatingInitPoses(bool flag) {
+    void LocalMapping::SetUpdatingInitPoses(bool flag)
+    {
         unique_lock<mutex> lock(mMutexUpdatingInitPoses);
         mbUpdatingInitPoses = flag;
     }
 
-    KeyFrame *LocalMapping::GetMapUpdateKF() {
+    KeyFrame *LocalMapping::GetMapUpdateKF()
+    {
         unique_lock<mutex> lock(mMutexMapUpdateFlag);
         return mpMapUpdateKF;
     }
 
-    bool LocalMapping::GetMapUpdateFlagForTracking() {
+    bool LocalMapping::GetMapUpdateFlagForTracking()
+    {
         unique_lock<mutex> lock(mMutexMapUpdateFlag);
         return mbMapUpdateFlagForTracking;
     }
 
-    void LocalMapping::SetMapUpdateFlagInTracking(bool bflag) {
+    void LocalMapping::SetMapUpdateFlagInTracking(bool bflag)
+    {
         unique_lock<mutex> lock(mMutexMapUpdateFlag);
         mbMapUpdateFlagForTracking = bflag;
-        if (bflag) {
+        if (bflag)
+        {
             mpMapUpdateKF = mpCurrentKeyFrame;
         }
     }
 
-    bool LocalMapping::GetVINSInited(void) {
+    bool LocalMapping::GetVINSInited(void)
+    {
         unique_lock<mutex> lock(mMutexVINSInitFlag);
         return mbVINSInited;
     }
 
-    void LocalMapping::SetVINSInited(bool flag) {
+    void LocalMapping::SetVINSInited(bool flag)
+    {
         unique_lock<mutex> lock(mMutexVINSInitFlag);
         mbVINSInited = flag;
     }
 
-    bool LocalMapping::GetFirstVINSInited(void) {
+    bool LocalMapping::GetFirstVINSInited(void)
+    {
         unique_lock<mutex> lock(mMutexFirstVINSInitFlag);
         return mbFirstVINSInited;
     }
 
-    void LocalMapping::SetFirstVINSInited(bool flag) {
+    void LocalMapping::SetFirstVINSInited(bool flag)
+    {
         unique_lock<mutex> lock(mMutexFirstVINSInitFlag);
         mbFirstVINSInited = flag;
         LOG(INFO) << "set first vins inited : " << flag << endl;
     }
 
-    Vector3d LocalMapping::GetGravityVec() {
+    Vector3d LocalMapping::GetGravityVec()
+    {
         return mGravityVec;
     }
 
-    void LocalMapping::VINSInitThread() {
+    void LocalMapping::VINSInitThread()
+    {
         unsigned long initedid = 0;
         cout << "Start VINSInitThread" << endl;
         SetVINSIniting(true);
-        while (1) {
+        while (1)
+        {
             if (KeyFrame::nNextId > 2)
-                if (!GetVINSInited() && mpCurrentKeyFrame->mnId > initedid) {
+                if (!GetVINSInited() && mpCurrentKeyFrame->mnId > initedid)
+                {
                     initedid = mpCurrentKeyFrame->mnId;
 
                     bool tmpbool = TryInitVIO();
-                    if (tmpbool) {
-                        //SetFirstVINSInited(true);
-                        //SetVINSInited(true);
+                    if (tmpbool)
+                    {
+                        // SetFirstVINSInited(true);
+                        // SetVINSInited(true);
                         cout << "VINS inited, quit VINS init thread" << endl;
                         break;
                     }
                 }
             usleep(3000);
-            if (isFinished()) {
+            if (isFinished())
+            {
                 cout << "LocalMapping finished, quit VINS init thread" << endl;
                 break;
             }
-            if (GetResetVINSInit()) {
+            if (GetResetVINSInit())
+            {
                 SetResetVINSInit(false);
                 cout << "Resetting, quit VINS init thread" << endl;
                 break;
@@ -186,20 +212,23 @@ namespace ygz {
         cout << "Quit VINSInitThread" << endl;
     }
 
-    bool LocalMapping::TryInitVIO(void) {
+    bool LocalMapping::TryInitVIO(void)
+    {
         if (mpMap->KeyFramesInMap() <= mnLocalWindowSize)
             return false;
 
         static bool fopened = false;
         static ofstream fgw, fscale, fbiasa, fbiasg;
-        if (!fopened) {
+        if (!fopened)
+        {
             fgw.open("/home/jp/opensourcecode/ORB_SLAM2/tmp/gw.txt");
             fscale.open("/home/jp/opensourcecode/ORB_SLAM2/tmp/scale.txt");
             fbiasa.open("/home/jp/opensourcecode/ORB_SLAM2/tmp/biasa.txt");
             fbiasg.open("/home/jp/opensourcecode/ORB_SLAM2/tmp/biasg.txt");
             if (fgw.is_open() && fscale.is_open() && fbiasa.is_open() && fbiasg.is_open())
                 fopened = true;
-            else {
+            else
+            {
                 cerr << "file open error in TryInitVIO" << endl;
                 fopened = false;
             }
@@ -217,11 +246,11 @@ namespace ygz {
         Matrix3d Rcb = Tcb.rotationMatrix();
         Vector3d pcb = Tcb.translation();
 
-
         // Wait KeyFrame Culling.
         // 1. if KeyFrame Culling is running, wait until finished.
         // 2. if KFs are being copied, then don't run KeyFrame Culling (in KeyFrameCulling function)
-        while (GetFlagCopyInitKFs()) {
+        while (GetFlagCopyInitKFs())
+        {
             usleep(3000);
         }
 
@@ -236,12 +265,14 @@ namespace ygz {
         // Store initialization-required KeyFrame data
         vector<KeyFrameInit *> vKFInit;
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             KeyFrame *pKF = vScaleGravityKF[i];
             vTwc.push_back(pKF->GetPoseInverse().cast<double>());
             vIMUPreInt.push_back(pKF->GetIMUPreInt());
             KeyFrameInit *pkfi = new KeyFrameInit(*pKF);
-            if (i != 0) {
+            if (i != 0)
+            {
                 pkfi->mpPrevKeyFrame = vKFInit[i - 1];
             }
             vKFInit.push_back(pkfi);
@@ -252,14 +283,16 @@ namespace ygz {
         // Step 1.
         // Try to compute initial gyro bias, using optimization with Gauss-Newton
         Vector3d bgest = Optimizer::OptimizeInitialGyroBias(vTwc, vIMUPreInt);
-        //Vector3d bgest = Optimizer::OptimizeInitialGyroBias(vScaleGravityKF);
+        // Vector3d bgest = Optimizer::OptimizeInitialGyroBias(vScaleGravityKF);
         LOG(WARNING) << "bgest: " << bgest.transpose() << endl;
 
         // Update biasg and pre-integration in LocalWindow. Remember to reset back to zero
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             vKFInit[i]->bg = bgest;
         }
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             vKFInit[i]->ComputePreInt();
         }
 
@@ -272,21 +305,22 @@ namespace ygz {
 
         // Step 2.
         // Approx Scale and Gravity vector in 'world' frame (first KF's camera frame)
-        for (int i = 0; i < N - 2; i++) {
+        for (int i = 0; i < N - 2; i++)
+        {
             const IMUPreintegrator &imupreint2 = vKFInit[i + 1]->mIMUPreInt;
             const IMUPreintegrator &imupreint3 = vKFInit[i + 2]->mIMUPreInt;
             // Delta time between frames
-            double dt12 = imupreint2.getDeltaTime();//pKF2->GetIMUPreInt().getDeltaTime();
-            double dt23 = imupreint3.getDeltaTime();//pKF3->GetIMUPreInt().getDeltaTime();
+            double dt12 = imupreint2.getDeltaTime(); // pKF2->GetIMUPreInt().getDeltaTime();
+            double dt23 = imupreint3.getDeltaTime(); // pKF3->GetIMUPreInt().getDeltaTime();
             // Pre-integrated measurements
             const Vector3d &dp12 = imupreint2.getDeltaP();
             const Vector3d &dv12 = imupreint2.getDeltaV();
             const Vector3d &dp23 = imupreint3.getDeltaP();
 
             // Pose of camera in world frame
-            const SE3d &Twc1 = vTwc[i]; //pKF1->GetPoseInverse()
-            const SE3d &Twc2 = vTwc[i + 1]; //pKF2->GetPoseInverse()
-            const SE3d &Twc3 = vTwc[i + 2]; //pKF3->GetPoseInverse()
+            const SE3d &Twc1 = vTwc[i];     // pKF1->GetPoseInverse()
+            const SE3d &Twc2 = vTwc[i + 1]; // pKF2->GetPoseInverse()
+            const SE3d &Twc3 = vTwc[i + 2]; // pKF3->GetPoseInverse()
             // Position of camera center
             const Vector3d &pc1 = Twc1.translation();
             const Vector3d &pc2 = Twc2.translation();
@@ -312,12 +346,11 @@ namespace ygz {
         VectorXd x = svd1.solve(B);
 
         //    // x=[s,gw] 4x1 vector
-        double sstar = x[0];    // scale should be positive
+        double sstar = x[0]; // scale should be positive
         //    cv::Mat gwstar = x.rowRange(1,4);   // gravity should be about ~9.8
         Vector3d gwstar = x.segment<3>(1);
 
         LOG(WARNING) << x.transpose() << ", gw:" << gwstar.transpose() << ", |gw|=" << gwstar.norm() << endl;
-
 
         // Step 3.
         // Use gravity magnitude 9.8 as constraint
@@ -340,7 +373,8 @@ namespace ygz {
         VectorXd D(3 * (N - 2));
         D.setZero();
 
-        for (int i = 0; i < N - 2; i++) {
+        for (int i = 0; i < N - 2; i++)
+        {
             const IMUPreintegrator &imupreint2 = vKFInit[i + 1]->mIMUPreInt;
             const IMUPreintegrator &imupreint3 = vKFInit[i + 2]->mIMUPreInt;
             // Delta time between frames
@@ -354,9 +388,9 @@ namespace ygz {
             const Matrix3d &Jvba12 = imupreint2.getJVBiasa();
             const Matrix3d &Jpba23 = imupreint3.getJPBiasa();
             // Pose of camera in world frame
-            const SE3d &Twc1 = vTwc[i]; //pKF1->GetPoseInverse()
-            const SE3d &Twc2 = vTwc[i + 1]; //pKF2->GetPoseInverse()
-            const SE3d &Twc3 = vTwc[i + 2]; //pKF3->GetPoseInverse()
+            const SE3d &Twc1 = vTwc[i];     // pKF1->GetPoseInverse()
+            const SE3d &Twc2 = vTwc[i + 1]; // pKF2->GetPoseInverse()
+            const SE3d &Twc3 = vTwc[i + 2]; // pKF3->GetPoseInverse()
             // Position of camera center
             const Vector3d &pc1 = Twc1.translation();
             const Vector3d &pc2 = Twc2.translation();
@@ -369,11 +403,8 @@ namespace ygz {
             // lambda*s + phi*dthetaxy + zeta*ba = psi
             Vector3d lambda = (pc2 - pc1) * dt23 + (pc2 - pc3) * dt12;
             Matrix3d phi = -0.5 * (dt12 * dt12 * dt23 + dt12 * dt23 * dt23) * Rwi * SO3::hat(GI);
-            Matrix3d zeta = Rc2 * Rcb * Jpba23 * dt12
-                            + Rc1 * Rcb * Jvba12 * dt12 * dt23
-                            - Rc1 * Rcb * Jpba12 * dt23;
-            Vector3d psi = (Rc1 - Rc2) * pcb * dt23 + Rc1 * Rcb * dp12 * dt23 - (Rc2 - Rc3) * pcb * dt12
-                           - Rc2 * Rcb * dp23 * dt12 - Rc1 * Rcb * dv12 * dt23 * dt12 -
+            Matrix3d zeta = Rc2 * Rcb * Jpba23 * dt12 + Rc1 * Rcb * Jvba12 * dt12 * dt23 - Rc1 * Rcb * Jpba12 * dt23;
+            Vector3d psi = (Rc1 - Rc2) * pcb * dt23 + Rc1 * Rcb * dp12 * dt23 - (Rc2 - Rc3) * pcb * dt12 - Rc2 * Rcb * dp23 * dt12 - Rc1 * Rcb * dv12 * dt23 * dt12 -
                            0.5 * Rwi * GI * (dt12 * dt12 * dt23 + dt12 * dt23 * dt23);
             C.block<3, 1>(3 * i, 0) = lambda;
             C.block<3, 2>(3 * i, 1) = phi.block<3, 2>(0, 0);
@@ -387,7 +418,7 @@ namespace ygz {
 
         double s_ = y(0);
         Matrix<double, 2, 1> dthetaxy = y.segment<2>(1);
-        Vector3d dbiasa_ = y.segment<3>(3); //y.rowRange(3,6);
+        Vector3d dbiasa_ = y.segment<3>(3); // y.rowRange(3,6);
 
         LOG(WARNING) << y.transpose() << ", s:" << s_ << ", dthetaxy:" << dthetaxy.transpose() << ", dbiasa:"
                      << dbiasa_.transpose() << endl;
@@ -401,7 +432,8 @@ namespace ygz {
         LOG(WARNING) << "gw: " << gw.transpose() << ", |gw|=" << gw.norm() << endl;
 
         // Debug log
-        if (fopened) {
+        if (fopened)
+        {
             cout << "Time: " << mpCurrentKeyFrame->mTimeStamp - mnStartTime << ", sstar: " << sstar << ", s: " << s_
                  << endl;
 
@@ -417,23 +449,27 @@ namespace ygz {
                    << bgest(0) << " " << bgest(1) << " " << bgest(2) << " " << endl;
         }
 
-
         // ********************************
-        // TODO(jingpang): Add some logic or strategy to confirm initialization status
+        // TODO:(jingpang): Add some logic or strategy to confirm initialization status
         bool bVIOInited = false;
-        if (mbFirstTry) {
+        if (mbFirstTry)
+        {
             mbFirstTry = false;
             mnStartTime = mpCurrentKeyFrame->mTimeStamp;
         }
-        if (pNewestKF->mTimeStamp - mnStartTime >= ConfigParam::GetVINSInitTime()) {
+        if (pNewestKF->mTimeStamp - mnStartTime >= ConfigParam::GetVINSInitTime())
+        {
             bVIOInited = true;
         }
         LOG(INFO) << pNewestKF->mTimeStamp << ", " << mpCurrentKeyFrame->mTimeStamp << ", time elapsed: "
                   << pNewestKF->mTimeStamp - mnStartTime << endl;
         // When failed. Or when you're debugging.
         // Reset biasg to zero, and re-compute imu-preintegrator.
-        if (!bVIOInited) {
-        } else {
+        if (!bVIOInited)
+        {
+        }
+        else
+        {
             // Set NavState , scale and bias for all KeyFrames
             // Scale
             double scale = s_;
@@ -448,7 +484,8 @@ namespace ygz {
             RequestStop();
 
             // Wait until Local Mapping has effectively stopped
-            while (!isStopped() && !isFinished()) {
+            while (!isStopped() && !isFinished())
+            {
                 usleep(1000);
             }
 
@@ -457,13 +494,14 @@ namespace ygz {
                 unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
                 for (vector<KeyFrame *>::const_iterator vit = vScaleGravityKF.begin(), vend = vScaleGravityKF.end();
-                     vit != vend; vit++) {
+                     vit != vend; vit++)
+                {
                     KeyFrame *pKF = *vit;
                     if (pKF->isBad())
                         continue;
                     // Position and rotation of visual SLAM
-                    const Vector3d wPc = pKF->GetPoseInverse().translation().cast<double>();                   // wPc
-                    const Matrix3d Rwc = pKF->GetPoseInverse().rotationMatrix().cast<double>();            // Rwc
+                    const Vector3d wPc = pKF->GetPoseInverse().translation().cast<double>();    // wPc
+                    const Matrix3d Rwc = pKF->GetPoseInverse().rotationMatrix().cast<double>(); // Rwc
                     // Set position and rotation of navstate
                     const Vector3d wPb = scale * wPc + Rwc * pcb;
                     pKF->SetNavStatePos(wPb);
@@ -476,21 +514,23 @@ namespace ygz {
                     pKF->SetNavStateDeltaBa(Vector3d::Zero());
                     // Step 4.
                     // compute velocity
-                    if (pKF != vScaleGravityKF.back()) {
+                    if (pKF != vScaleGravityKF.back())
+                    {
                         KeyFrame *pKFnext = pKF->GetNextKeyFrame();
                         // IMU pre-int between pKF ~ pKFnext
                         const IMUPreintegrator &imupreint = pKFnext->GetIMUPreInt();
                         // Time from this(pKF) to next(pKFnext)
-                        double dt = imupreint.getDeltaTime();                                       // deltaTime
-                        const Vector3d &dp = imupreint.getDeltaP();       // deltaP
-                        const Matrix3d &Jpba = imupreint.getJPBiasa();    // J_deltaP_biasa
-                        const Vector3d wPcnext = pKFnext->GetPoseInverse().translation().cast<double>();           // wPc next
-                        const Matrix3d Rwcnext = pKFnext->GetPoseInverse().rotationMatrix().cast<double>();    // Rwc next
+                        double dt = imupreint.getDeltaTime();                                               // deltaTime
+                        const Vector3d &dp = imupreint.getDeltaP();                                         // deltaP
+                        const Matrix3d &Jpba = imupreint.getJPBiasa();                                      // J_deltaP_biasa
+                        const Vector3d wPcnext = pKFnext->GetPoseInverse().translation().cast<double>();    // wPc next
+                        const Matrix3d Rwcnext = pKFnext->GetPoseInverse().rotationMatrix().cast<double>(); // Rwc next
 
-                        Eigen::Vector3d vel = -1. / dt * (scale * (wPc - wPcnext) + (Rwc - Rwcnext) * pcb +
-                                                          Rwc * Rcb * (dp + Jpba * dbiasa_) + 0.5 * gw * dt * dt);
+                        Eigen::Vector3d vel = -1. / dt * (scale * (wPc - wPcnext) + (Rwc - Rwcnext) * pcb + Rwc * Rcb * (dp + Jpba * dbiasa_) + 0.5 * gw * dt * dt);
                         pKF->SetNavStateVel(vel);
-                    } else {
+                    }
+                    else
+                    {
                         // If this is the last KeyFrame, no 'next' KeyFrame exists
                         KeyFrame *pKFprev = pKF->GetPrevKeyFrame();
                         const IMUPreintegrator &imupreint_prev_cur = pKF->GetIMUPreInt();
@@ -506,7 +546,8 @@ namespace ygz {
 
                 // Re-compute IMU pre-integration at last.
                 for (vector<KeyFrame *>::const_iterator vit = vScaleGravityKF.begin(), vend = vScaleGravityKF.end();
-                     vit != vend; vit++) {
+                     vit != vend; vit++)
+                {
                     KeyFrame *pKF = *vit;
                     if (pKF->isBad())
                         continue;
@@ -516,7 +557,8 @@ namespace ygz {
                 // Update poses (multiply metric scale)
                 vector<KeyFrame *> mspKeyFrames = mpMap->GetAllKeyFrames();
                 for (std::vector<KeyFrame *>::iterator sit = mspKeyFrames.begin(), send = mspKeyFrames.end();
-                     sit != send; sit++) {
+                     sit != send; sit++)
+                {
                     KeyFrame *pKF = *sit;
                     SE3f Tcw = pKF->GetPose();
                     Tcw.translation() *= scale;
@@ -524,19 +566,24 @@ namespace ygz {
                 }
                 vector<MapPoint *> mspMapPoints = mpMap->GetAllMapPoints();
                 for (std::vector<MapPoint *>::iterator sit = mspMapPoints.begin(), send = mspMapPoints.end();
-                     sit != send; sit++) {
+                     sit != send; sit++)
+                {
                     MapPoint *pMP = *sit;
                     pMP->UpdateScale(scale);
                 }
-                LOG(INFO) << std::endl << "... Map scale updated ..." << std::endl << std::endl;
+                LOG(INFO) << std::endl
+                          << "... Map scale updated ..." << std::endl
+                          << std::endl;
 
                 // Update NavStates
-                if (pNewestKF != mpCurrentKeyFrame) {
+                if (pNewestKF != mpCurrentKeyFrame)
+                {
                     KeyFrame *pKF;
 
                     // step1. bias&d_bias
                     pKF = pNewestKF;
-                    do {
+                    do
+                    {
                         pKF = pKF->GetNextKeyFrame();
 
                         // Update bias of Gyr & Acc
@@ -549,7 +596,8 @@ namespace ygz {
 
                     // step2. re-compute pre-integration
                     pKF = pNewestKF;
-                    do {
+                    do
+                    {
                         pKF = pKF->GetNextKeyFrame();
 
                         pKF->ComputePreInt();
@@ -557,32 +605,35 @@ namespace ygz {
 
                     // step3. update pos/rot
                     pKF = pNewestKF;
-                    do {
+                    do
+                    {
                         pKF = pKF->GetNextKeyFrame();
 
                         // Update rot/pos
                         // Position and rotation of visual SLAM
-                        Vector3d wPc = pKF->GetPoseInverse().translation().cast<double>();                   // wPc
-                        Matrix3d Rwc = pKF->GetPoseInverse().rotationMatrix().cast<double>();            // Rwc
+                        Vector3d wPc = pKF->GetPoseInverse().translation().cast<double>();    // wPc
+                        Matrix3d Rwc = pKF->GetPoseInverse().rotationMatrix().cast<double>(); // Rwc
                         Vector3d wPb = wPc + Rwc * pcb;
                         pKF->SetNavStatePos(wPb);
                         pKF->SetNavStateRot(Rwc * Rcb);
 
-                        if (pKF != mpCurrentKeyFrame) {
+                        if (pKF != mpCurrentKeyFrame)
+                        {
                             KeyFrame *pKFnext = pKF->GetNextKeyFrame();
                             // IMU pre-int between pKF ~ pKFnext
                             const IMUPreintegrator &imupreint = pKFnext->GetIMUPreInt();
                             // Time from this(pKF) to next(pKFnext)
-                            double dt = imupreint.getDeltaTime();                                       // deltaTime
-                            const Vector3d &dp = imupreint.getDeltaP();       // deltaP
-                            const Matrix3d &Jpba = imupreint.getJPBiasa();    // J_deltaP_biasa
-                            const Vector3d wPcnext = pKFnext->GetPoseInverse().translation().cast<double>();           // wPc next
-                            const Matrix3d Rwcnext = pKFnext->GetPoseInverse().rotationMatrix().cast<double>();    // Rwc next
+                            double dt = imupreint.getDeltaTime();                                               // deltaTime
+                            const Vector3d &dp = imupreint.getDeltaP();                                         // deltaP
+                            const Matrix3d &Jpba = imupreint.getJPBiasa();                                      // J_deltaP_biasa
+                            const Vector3d wPcnext = pKFnext->GetPoseInverse().translation().cast<double>();    // wPc next
+                            const Matrix3d Rwcnext = pKFnext->GetPoseInverse().rotationMatrix().cast<double>(); // Rwc next
 
-                            Vector3d vel = -1. / dt * ((wPc - wPcnext) + (Rwc - Rwcnext) * pcb +
-                                                       Rwc * Rcb * (dp + Jpba * dbiasa_) + 0.5 * gw * dt * dt);
+                            Vector3d vel = -1. / dt * ((wPc - wPcnext) + (Rwc - Rwcnext) * pcb + Rwc * Rcb * (dp + Jpba * dbiasa_) + 0.5 * gw * dt * dt);
                             pKF->SetNavStateVel(vel);
-                        } else {
+                        }
+                        else
+                        {
                             // If this is the last KeyFrame, no 'next' KeyFrame exists
                             KeyFrame *pKFprev = pKF->GetPrevKeyFrame();
                             const IMUPreintegrator &imupreint_prev_cur = pKF->GetIMUPreInt();
@@ -597,20 +648,19 @@ namespace ygz {
                         }
 
                     } while (pKF != mpCurrentKeyFrame);
-
                 }
 
-                LOG(INFO) << std::endl << "... Map NavState updated ..." << std::endl << std::endl;
+                LOG(INFO) << std::endl
+                          << "... Map NavState updated ..." << std::endl
+                          << std::endl;
 
                 SetFirstVINSInited(true);
                 SetVINSInited(true);
-
             }
             SetUpdatingInitPoses(false);
 
             // Release LocalMapping
             Release();
-
 
             // Run global BA after inited
             unsigned long nGBAKF = mpCurrentKeyFrame->mnId;
@@ -622,7 +672,8 @@ namespace ygz {
             RequestStop();
             LOG(INFO) << "request local mapping stop" << endl;
             // Wait until Local Mapping has effectively stopped
-            while (!isStopped() && !isFinished()) {
+            while (!isStopped() && !isFinished())
+            {
                 usleep(1000);
             }
             LOG(INFO) << "local mapping stopped" << endl;
@@ -631,18 +682,21 @@ namespace ygz {
                 unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
 
                 // Correct keyframes starting at map first keyframe
-                list < KeyFrame * > lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(), mpMap->mvpKeyFrameOrigins.end());
+                list<KeyFrame *> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(), mpMap->mvpKeyFrameOrigins.end());
 
-                while (!lpKFtoCheck.empty()) {
+                while (!lpKFtoCheck.empty())
+                {
                     KeyFrame *pKF = lpKFtoCheck.front();
                     const set<KeyFrame *> sChilds = pKF->GetChilds();
                     SE3d Twc = pKF->GetPoseInverse().cast<double>();
-                    for (set<KeyFrame *>::const_iterator sit = sChilds.begin(); sit != sChilds.end(); sit++) {
+                    for (set<KeyFrame *>::const_iterator sit = sChilds.begin(); sit != sChilds.end(); sit++)
+                    {
                         KeyFrame *pChild = *sit;
-                        if (pChild->mnBAGlobalForKF != nGBAKF) {
+                        if (pChild->mnBAGlobalForKF != nGBAKF)
+                        {
                             LOG(INFO) << "correct KF after gBA in VI init: " << pChild->mnId << endl;
                             SE3f Tchildc = pChild->GetPose() * Twc.cast<float>();
-                            pChild->mTcwGBA = Tchildc * pKF->mTcwGBA;//*Tcorc*pKF->mTcwGBA;
+                            pChild->mTcwGBA = Tchildc * pKF->mTcwGBA; //*Tcorc*pKF->mTcwGBA;
                             pChild->mnBAGlobalForKF = nGBAKF;
 
                             // Set NavStateGBA and correct the P/V/R
@@ -653,7 +707,7 @@ namespace ygz {
                             Matrix3d Rw1 = pChild->mNavStateGBA.Get_RotMatrix();
                             Vector3d Vw1 = pChild->mNavStateGBA.Get_V();
                             Vector3d Vw2 = RwbGBA * Rw1.transpose() *
-                                           Vw1;   // bV1 = bV2 ==> Rwb1^T*wV1 = Rwb2^T*wV2 ==> wV2 = Rwb2*Rwb1^T*wV1
+                                           Vw1; // bV1 = bV2 ==> Rwb1^T*wV1 = Rwb2^T*wV2 ==> wV2 = Rwb2*Rwb1^T*wV1
                             pChild->mNavStateGBA.Set_Pos(PwbGBA);
                             pChild->mNavStateGBA.Set_Rot(RwbGBA);
                             pChild->mNavStateGBA.Set_Vel(Vw2);
@@ -662,7 +716,7 @@ namespace ygz {
                     }
 
                     pKF->mTcwBefGBA = pKF->GetPose();
-                    //pKF->SetPose(pKF->mTcwGBA);
+                    // pKF->SetPose(pKF->mTcwGBA);
                     pKF->mNavStateBefGBA = pKF->GetNavState();
                     pKF->SetNavState(pKF->mNavStateGBA);
                     pKF->UpdatePoseFromNS(Tbc);
@@ -673,16 +727,20 @@ namespace ygz {
                 // Correct MapPoints
                 const vector<MapPoint *> vpMPs = mpMap->GetAllMapPoints();
 
-                for (size_t i = 0; i < vpMPs.size(); i++) {
+                for (size_t i = 0; i < vpMPs.size(); i++)
+                {
                     MapPoint *pMP = vpMPs[i];
 
                     if (pMP->isBad())
                         continue;
 
-                    if (pMP->mnBAGlobalForKF == nGBAKF) {
+                    if (pMP->mnBAGlobalForKF == nGBAKF)
+                    {
                         // If optimized by Global BA, just update
                         pMP->SetWorldPos(pMP->mPosGBA);
-                    } else {
+                    }
+                    else
+                    {
                         // Update according to the correction of its reference keyframe
                         KeyFrame *pRefKF = pMP->GetReferenceKeyFrame();
 
@@ -711,10 +769,10 @@ namespace ygz {
                 // Release LocalMapping
                 Release();
             }
-
         }
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             if (vKFInit[i])
                 delete vKFInit[i];
         }
@@ -722,29 +780,37 @@ namespace ygz {
         return bVIOInited;
     }
 
-    void LocalMapping::AddToLocalWindow(KeyFrame *pKF) {
+    void LocalMapping::AddToLocalWindow(KeyFrame *pKF)
+    {
         mlLocalKeyFrames.push_back(pKF);
-        if (mlLocalKeyFrames.size() > mnLocalWindowSize) {
+        if (mlLocalKeyFrames.size() > mnLocalWindowSize)
+        {
             mlLocalKeyFrames.pop_front();
         }
     }
 
-    void LocalMapping::DeleteBadInLocalWindow(void) {
+    void LocalMapping::DeleteBadInLocalWindow(void)
+    {
         std::list<KeyFrame *>::iterator lit = mlLocalKeyFrames.begin();
-        while (lit != mlLocalKeyFrames.end()) {
+        while (lit != mlLocalKeyFrames.end())
+        {
             KeyFrame *pKF = *lit;
-            if (!pKF) LOG(ERROR) << "pKF null in DeleteBadInLocalWindow?" << endl; //Test log
-            if (pKF->isBad()) {
+            if (!pKF)
+                LOG(ERROR) << "pKF null in DeleteBadInLocalWindow?" << endl; // Test log
+            if (pKF->isBad())
+            {
                 lit = mlLocalKeyFrames.erase(lit);
-            } else {
+            }
+            else
+            {
                 lit++;
             }
         }
     }
 
-    LocalMapping::LocalMapping(Map *pMap, const float bMonocular, ConfigParam *pParams) :
-            mbMonocular(bMonocular), mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
-            mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true) {
+    LocalMapping::LocalMapping(Map *pMap, const float bMonocular, ConfigParam *pParams) : mbMonocular(bMonocular), mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
+                                                                                          mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true)
+    {
         mpParams = pParams;
         mnLocalWindowSize = mpParams->GetLocalWindowSize();
         mbUseIMU = mpParams->GetUseIMUFlag();
@@ -759,31 +825,36 @@ namespace ygz {
         mbUpdatingInitPoses = false;
         mbCopyInitKFs = false;
 
-        //Thread for VINS initialization
+        // Thread for VINS initialization
         if (mbUseIMU)
             mptLocalMappingVIOInit = new thread(&LocalMapping::VINSInitThread, this);
         else
             mptLocalMappingVIOInit = NULL;
     }
 
-    void LocalMapping::SetLoopCloser(LoopClosing *pLoopCloser) {
+    void LocalMapping::SetLoopCloser(LoopClosing *pLoopCloser)
+    {
         mpLoopCloser = pLoopCloser;
     }
 
-    void LocalMapping::SetTracker(Tracking *pTracker) {
+    void LocalMapping::SetTracker(Tracking *pTracker)
+    {
         mpTracker = pTracker;
     }
 
-    void LocalMapping::Run() {
+    void LocalMapping::Run()
+    {
 
         mbFinished = false;
 
-        while (1) {
+        while (1)
+        {
             // Tracking will see that Local Mapping is busy
             SetAcceptKeyFrames(false);
 
             // Check if there are keyframes in the queue
-            if (CheckNewKeyFrames()) {
+            if (CheckNewKeyFrames())
+            {
                 // BoW conversion and insertion in Map
                 // VI-A keyframe insertion
                 ProcessNewKeyFrame();
@@ -796,7 +867,8 @@ namespace ygz {
                 // VI-C new map points creation
                 CreateNewMapPoints();
 
-                if (!CheckNewKeyFrames()) {
+                if (!CheckNewKeyFrames())
+                {
                     // Find more matches in neighbor keyframes and fuse point duplications
                     SearchInNeighbors();
                 }
@@ -804,20 +876,24 @@ namespace ygz {
                 mbAbortBA = false;
 
                 // 已经处理完队列中的最后的一个关键帧，并且闭环检测没有请求停止LocalMapping
-                if (!CheckNewKeyFrames() && !stopRequested()) {
+                if (!CheckNewKeyFrames() && !stopRequested())
+                {
                     // VI-D Local BA
-                    if (mpMap->KeyFramesInMap() > 2) {
-                        if (!mbUseIMU || (mbUseIMU && !GetVINSInited())) {
+                    if (mpMap->KeyFramesInMap() > 2)
+                    {
+                        if (!mbUseIMU || (mbUseIMU && !GetVINSInited()))
+                        {
                             Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpMap, this);
-                        } else {
+                        }
+                        else
+                        {
                             Optimizer::LocalBundleAdjustmentNavState(mpCurrentKeyFrame, mlLocalKeyFrames, &mbAbortBA,
                                                                      mpMap, mGravityVec, this);
                             SetMapUpdateFlagInTracking(true);
                         }
-
                     }
 
-                    //HERE, need to add a thread for Visual-Inertial initialization
+                    // HERE, need to add a thread for Visual-Inertial initialization
 
                     // Check redundant local Keyframes
                     // 检测并剔除当前帧相邻的关键帧中冗余的关键帧
@@ -830,9 +906,12 @@ namespace ygz {
                 }
 
                 mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
-            } else if (Stop()) {
+            }
+            else if (Stop())
+            {
                 // Safe area to stop
-                while (isStopped() && !CheckFinish()) {
+                while (isStopped() && !CheckFinish())
+                {
                     usleep(1000);
                 }
                 if (CheckFinish())
@@ -860,7 +939,8 @@ namespace ygz {
      * 这里仅仅是将关键帧插入到列表中进行等待
      * @param pKF KeyFrame
      */
-    void LocalMapping::InsertKeyFrame(KeyFrame *pKF) {
+    void LocalMapping::InsertKeyFrame(KeyFrame *pKF)
+    {
         unique_lock<mutex> lock(mMutexNewKFs);
         // 将关键帧插入到列表中
         mlNewKeyFrames.push_back(pKF);
@@ -871,7 +951,8 @@ namespace ygz {
      * @brief 查看列表中是否有等待被插入的关键帧
      * @return 如果存在，返回true
      */
-    bool LocalMapping::CheckNewKeyFrames() {
+    bool LocalMapping::CheckNewKeyFrames()
+    {
         unique_lock<mutex> lock(mMutexNewKFs);
         return (!mlNewKeyFrames.empty());
     }
@@ -883,7 +964,8 @@ namespace ygz {
      * - 关联当前关键帧至MapPoints，并更新MapPoints的平均观测方向和观测距离范围
      * - 插入关键帧，更新Covisibility图和Ensenssial图
      */
-    void LocalMapping::ProcessNewKeyFrame() {
+    void LocalMapping::ProcessNewKeyFrame()
+    {
         {
             unique_lock<mutex> lock(mMutexNewKFs);
             // 从列表中获得一个等待被插入的关键帧
@@ -894,18 +976,23 @@ namespace ygz {
         // Associate MapPoints to the new keyframe and update normal and descriptor
         const vector<MapPoint *> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
 
-        for (size_t i = 0; i < vpMapPointMatches.size(); i++) {
+        for (size_t i = 0; i < vpMapPointMatches.size(); i++)
+        {
             MapPoint *pMP = vpMapPointMatches[i];
-            if (pMP) {
-                if (!pMP->isBad()) {
+            if (pMP)
+            {
+                if (!pMP->isBad())
+                {
                     // NOTE
-                    if (!pMP->IsInKeyFrame(mpCurrentKeyFrame)) {
+                    if (!pMP->IsInKeyFrame(mpCurrentKeyFrame))
+                    {
                         pMP->AddObservation(mpCurrentKeyFrame, i);
                         // 获得该点的平均观测方向和观测距离范围
                         pMP->UpdateNormalAndDepth();
                         // 加入关键帧后，更新3d点的最佳描述子
                         pMP->ComputeDistinctiveDescriptors();
-                    } else // this can only happen for new stereo points inserted by the Tracking
+                    }
+                    else // this can only happen for new stereo points inserted by the Tracking
                     {
                         // 将所有点放到mlpRecentAddedMapPoints，等待检查
                         mlpRecentAddedMapPoints.push_back(pMP);
@@ -927,7 +1014,8 @@ namespace ygz {
         mpMap->AddKeyFrame(mpCurrentKeyFrame);
     }
 
-    void LocalMapping::MapPointCulling() {
+    void LocalMapping::MapPointCulling()
+    {
         // Check Recent Added MapPoints
         list<MapPoint *>::iterator lit = mlpRecentAddedMapPoints.begin();
         const unsigned long int nCurrentKFid = mpCurrentKeyFrame->mnId;
@@ -940,22 +1028,29 @@ namespace ygz {
         const int cnThObs = nThObs;
 
         // 遍历等待检查的所有点
-        while (lit != mlpRecentAddedMapPoints.end()) {
+        while (lit != mlpRecentAddedMapPoints.end())
+        {
             MapPoint *pMP = *lit;
-            if (pMP->isBad()) {
+            if (pMP->isBad())
+            {
                 // 坏点直接删除
                 lit = mlpRecentAddedMapPoints.erase(lit);
-            } else if (pMP->GetFoundRatio() < 0.25f) {
+            }
+            else if (pMP->GetFoundRatio() < 0.25f)
+            {
                 // VI-B 条件1，能找到该点的帧不应该少于理论上观测到该点的帧的1/4
                 // IncreaseFound, IncreaseVisible。注意不一定是关键帧。
                 pMP->SetBadFlag();
                 lit = mlpRecentAddedMapPoints.erase(lit);
-            } else if (((int) nCurrentKFid - (int) pMP->mnFirstKFid) >= 2 && pMP->Observations() <= cnThObs) {
+            }
+            else if (((int)nCurrentKFid - (int)pMP->mnFirstKFid) >= 2 && pMP->Observations() <= cnThObs)
+            {
                 // VI-B 条件2，从该点建立开始，到现在已经过了不小于2帧，但是观测到该点的关键帧数不超过2
                 // 那么该点检验不合格
                 pMP->SetBadFlag();
                 lit = mlpRecentAddedMapPoints.erase(lit);
-            } else if (((int) nCurrentKFid - (int) pMP->mnFirstKFid) >= 3)
+            }
+            else if (((int)nCurrentKFid - (int)pMP->mnFirstKFid) >= 3)
                 // 从建立该点开始，过了3帧，检测合格
                 lit = mlpRecentAddedMapPoints.erase(lit);
             else
@@ -975,7 +1070,8 @@ namespace ygz {
     // 在通过平行、重投影误差、尺度一致性等检查后，则建立一个对应的3d点MapPoint对象
     // 需要标记新的3d点与两个关键帧之间的观测关系，还需要计算3d点的平均观测方向以及最佳的描述子
     // 最后将新产生的3d点放到检测队列中等待检验
-    void LocalMapping::CreateNewMapPoints() {
+    void LocalMapping::CreateNewMapPoints()
+    {
         // Retrieve neighbor keyframes in covisibility graph
         // 在当前插入的关键帧中，找到权重前nn的邻接关键帧
         int nn = 10;
@@ -1006,7 +1102,8 @@ namespace ygz {
 
         // Search matches with epipolar restriction and triangulate
         // 遍历所有找到权重前nn的相邻关键帧
-        for (size_t i = 0; i < vpNeighKFs.size(); i++) {
+        for (size_t i = 0; i < vpNeighKFs.size(); i++)
+        {
             if (i > 0 && CheckNewKeyFrames())
                 return;
 
@@ -1021,10 +1118,13 @@ namespace ygz {
             // 基线长度
             const float baseline = vBaseline.norm();
 
-            if (!mbMonocular) {
+            if (!mbMonocular)
+            {
                 if (baseline < pKF2->mb)
                     continue;
-            } else {
+            }
+            else
+            {
                 // 邻接关键帧的场景深度中值
                 const float medianDepthKF2 = pKF2->ComputeSceneMedianDepth(2);
                 // 景深与距离的比例
@@ -1038,7 +1138,7 @@ namespace ygz {
             Matrix3f F12 = ComputeF12(mpCurrentKeyFrame, pKF2);
 
             // Search matches that fullfil epipolar constraint
-            vector<pair<size_t, size_t> > vMatchedIndices;
+            vector<pair<size_t, size_t>> vMatchedIndices;
             matcher.SearchForTriangulation(mpCurrentKeyFrame, pKF2, F12, vMatchedIndices, false);
 
             Matrix3f Rcw2 = pKF2->GetRotation();
@@ -1057,7 +1157,8 @@ namespace ygz {
 
             // Triangulate each match
             const int nmatches = vMatchedIndices.size();
-            for (int ikp = 0; ikp < nmatches; ikp++) {
+            for (int ikp = 0; ikp < nmatches; ikp++)
+            {
                 // 当前匹配对在当前关键帧中的索引
                 const int &idx1 = vMatchedIndices[ikp].first;
 
@@ -1095,7 +1196,8 @@ namespace ygz {
 
                 Vector3f x3D;
                 if (cosParallaxRays < cosParallaxStereo && cosParallaxRays > 0 &&
-                    (bStereo1 || bStereo2 || cosParallaxRays < 0.9998)) {
+                    (bStereo1 || bStereo2 || cosParallaxRays < 0.9998))
+                {
                     // Linear Triangulation Method
                     Matrix4f A;
                     A.row(0) = xn1[0] * Tcw1.row(2) - Tcw1.row(0);
@@ -1108,17 +1210,21 @@ namespace ygz {
                     if (V(3, 3) == 0)
                         continue;
                     x3D = V.block<3, 1>(0, 3) / V(3, 3);
-
-                } else if (bStereo1 && cosParallaxStereo1 < cosParallaxStereo2) {
+                }
+                else if (bStereo1 && cosParallaxStereo1 < cosParallaxStereo2)
+                {
                     x3D = mpCurrentKeyFrame->UnprojectStereo(idx1);
-                } else if (bStereo2 && cosParallaxStereo2 < cosParallaxStereo1) {
+                }
+                else if (bStereo2 && cosParallaxStereo2 < cosParallaxStereo1)
+                {
                     x3D = pKF2->UnprojectStereo(idx2);
-                } else
-                    continue; //No stereo and very low parallax
+                }
+                else
+                    continue; // No stereo and very low parallax
 
                 Vector3f x3Dt = x3D;
 
-                //Check triangulation in front of cameras
+                // Check triangulation in front of cameras
                 float z1 = Rcw1.row(2).dot(x3Dt) + tcw1[2];
                 if (z1 <= 0)
                     continue;
@@ -1127,20 +1233,23 @@ namespace ygz {
                 if (z2 <= 0)
                     continue;
 
-                //Check reprojection error in first keyframe
+                // Check reprojection error in first keyframe
                 const float &sigmaSquare1 = mpCurrentKeyFrame->mvLevelSigma2[kp1.octave];
                 const float x1 = Rcw1.row(0).dot(x3Dt) + tcw1[0];
                 const float y1 = Rcw1.row(1).dot(x3Dt) + tcw1[1];
                 const float invz1 = 1.0 / z1;
 
-                if (!bStereo1) {
+                if (!bStereo1)
+                {
                     float u1 = fx1 * x1 * invz1 + cx1;
                     float v1 = fy1 * y1 * invz1 + cy1;
                     float errX1 = u1 - kp1.pt.x;
                     float errY1 = v1 - kp1.pt.y;
                     if ((errX1 * errX1 + errY1 * errY1) > 5.991 * sigmaSquare1)
                         continue;
-                } else {
+                }
+                else
+                {
                     float u1 = fx1 * x1 * invz1 + cx1;
                     float u1_r = u1 - mpCurrentKeyFrame->mbf * invz1;
                     float v1 = fy1 * y1 * invz1 + cy1;
@@ -1151,19 +1260,22 @@ namespace ygz {
                         continue;
                 }
 
-                //Check reprojection error in second keyframe
+                // Check reprojection error in second keyframe
                 const float sigmaSquare2 = pKF2->mvLevelSigma2[kp2.octave];
                 const float x2 = Rcw2.row(0).dot(x3Dt) + tcw2[0];
                 const float y2 = Rcw2.row(1).dot(x3Dt) + tcw2[1];
                 const float invz2 = 1.0 / z2;
-                if (!bStereo2) {
+                if (!bStereo2)
+                {
                     float u2 = fx2 * x2 * invz2 + cx2;
                     float v2 = fy2 * y2 * invz2 + cy2;
                     float errX2 = u2 - kp2.pt.x;
                     float errY2 = v2 - kp2.pt.y;
                     if ((errX2 * errX2 + errY2 * errY2) > 5.991 * sigmaSquare2)
                         continue;
-                } else {
+                }
+                else
+                {
                     float u2 = fx2 * x2 * invz2 + cx2;
                     float u2_r = u2 - mpCurrentKeyFrame->mbf * invz2;
                     float v2 = fy2 * y2 * invz2 + cy2;
@@ -1174,7 +1286,7 @@ namespace ygz {
                         continue;
                 }
 
-                //Check scale consistency
+                // Check scale consistency
                 Vector3f normal1 = x3D - Ow1;
                 float dist1 = normal1.norm();
 
@@ -1186,7 +1298,7 @@ namespace ygz {
 
                 const float ratioDist = dist2 / dist1;
                 const float ratioOctave =
-                        mpCurrentKeyFrame->mvScaleFactors[kp1.octave] / pKF2->mvScaleFactors[kp2.octave];
+                    mpCurrentKeyFrame->mvScaleFactors[kp1.octave] / pKF2->mvScaleFactors[kp2.octave];
 
                 /*if(fabs(ratioDist-ratioOctave)>ratioFactor)
                     continue;*/
@@ -1225,7 +1337,8 @@ namespace ygz {
     // 如果没有成为3d点，那么就添加这个3d点与关键帧还有特征点之间的关系
     // 处理完3d点和关键帧的关系后需要更新相应的图和树结构
     // 还需要更新所涉及3d点的观测方向，与引用关键帧的距离，以及最合适的描述子
-    void LocalMapping::SearchInNeighbors() {
+    void LocalMapping::SearchInNeighbors()
+    {
         // Retrieve neighbor keyframes
         // 获得当前关键帧在covisibility图中权重排名前nn的邻接关键帧
         int nn = 10;
@@ -1235,7 +1348,8 @@ namespace ygz {
 
         // 获得相邻关键帧和二级相邻关键帧的集合，存储在vpTargetKFs中
         vector<KeyFrame *> vpTargetKFs;
-        for (vector<KeyFrame *>::const_iterator vit = vpNeighKFs.begin(), vend = vpNeighKFs.end(); vit != vend; vit++) {
+        for (vector<KeyFrame *>::const_iterator vit = vpNeighKFs.begin(), vend = vpNeighKFs.end(); vit != vend; vit++)
+        {
             KeyFrame *pKFi = *vit;
             if (pKFi->isBad() || pKFi->mnFuseTargetForKF == mpCurrentKeyFrame->mnId)
                 continue;
@@ -1245,7 +1359,8 @@ namespace ygz {
             // Extend to some second neighbors
             const vector<KeyFrame *> vpSecondNeighKFs = pKFi->GetBestCovisibilityKeyFrames(5);
             for (vector<KeyFrame *>::const_iterator vit2 = vpSecondNeighKFs.begin(), vend2 = vpSecondNeighKFs.end();
-                 vit2 != vend2; vit2++) {
+                 vit2 != vend2; vit2++)
+            {
                 KeyFrame *pKFi2 = *vit2;
                 if (pKFi2->isBad() || pKFi2->mnFuseTargetForKF == mpCurrentKeyFrame->mnId ||
                     pKFi2->mnId == mpCurrentKeyFrame->mnId)
@@ -1254,11 +1369,11 @@ namespace ygz {
             }
         }
 
-
         // Search matches by projection from current KF in target KFs
         ORBmatcher matcher;
         vector<MapPoint *> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
-        for (vector<KeyFrame *>::iterator vit = vpTargetKFs.begin(), vend = vpTargetKFs.end(); vit != vend; vit++) {
+        for (vector<KeyFrame *>::iterator vit = vpTargetKFs.begin(), vend = vpTargetKFs.end(); vit != vend; vit++)
+        {
             KeyFrame *pKFi = *vit;
 
             // 判断当前关键帧中的3d点是否能在一级邻接和二级邻接的关键帧中找到
@@ -1275,14 +1390,16 @@ namespace ygz {
 
         // 遍历每一个一二级邻接关键帧
         for (vector<KeyFrame *>::iterator vitKF = vpTargetKFs.begin(), vendKF = vpTargetKFs.end();
-             vitKF != vendKF; vitKF++) {
+             vitKF != vendKF; vitKF++)
+        {
             KeyFrame *pKFi = *vitKF;
 
             vector<MapPoint *> vpMapPointsKFi = pKFi->GetMapPointMatches();
 
             // 遍历当前一二级邻接关键帧中所有的3d点
             for (vector<MapPoint *>::iterator vitMP = vpMapPointsKFi.begin(), vendMP = vpMapPointsKFi.end();
-                 vitMP != vendMP; vitMP++) {
+                 vitMP != vendMP; vitMP++)
+            {
                 MapPoint *pMP = *vitMP;
                 if (!pMP)
                     continue;
@@ -1303,13 +1420,15 @@ namespace ygz {
         // 如果3d点能匹配关键帧的特征点，并且该点不是3d点，那么更新3d点与关键帧的关系
         matcher.Fuse(mpCurrentKeyFrame, vpFuseCandidates);
 
-
         // Update points
         vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
-        for (size_t i = 0, iend = vpMapPointMatches.size(); i < iend; i++) {
+        for (size_t i = 0, iend = vpMapPointMatches.size(); i < iend; i++)
+        {
             MapPoint *pMP = vpMapPointMatches[i];
-            if (pMP) {
-                if (!pMP->isBad()) {
+            if (pMP)
+            {
+                if (!pMP->isBad())
+                {
                     // 在所有找到pMP的关键帧中，获得最佳的描述子
                     pMP->ComputeDistinctiveDescriptors();
 
@@ -1326,7 +1445,8 @@ namespace ygz {
     }
 
     // 根据姿态计算两个关键帧之间的基本矩阵
-    Matrix3f LocalMapping::ComputeF12(KeyFrame *&pKF1, KeyFrame *&pKF2) {
+    Matrix3f LocalMapping::ComputeF12(KeyFrame *&pKF1, KeyFrame *&pKF2)
+    {
         Matrix3f R1w = pKF1->GetRotation();
         Vector3f t1w = pKF1->GetTranslation();
         Matrix3f R2w = pKF2->GetRotation();
@@ -1343,16 +1463,19 @@ namespace ygz {
         return K1.transpose().inverse() * t12x * R12 * K2.inverse();
     }
 
-    void LocalMapping::RequestStop() {
+    void LocalMapping::RequestStop()
+    {
         unique_lock<mutex> lock(mMutexStop);
         mbStopRequested = true;
         unique_lock<mutex> lock2(mMutexNewKFs);
         mbAbortBA = true;
     }
 
-    bool LocalMapping::Stop() {
+    bool LocalMapping::Stop()
+    {
         unique_lock<mutex> lock(mMutexStop);
-        if (mbStopRequested && !mbNotStop) {
+        if (mbStopRequested && !mbNotStop)
+        {
             mbStopped = true;
             cout << "Local Mapping STOP" << endl;
             return true;
@@ -1361,17 +1484,20 @@ namespace ygz {
         return false;
     }
 
-    bool LocalMapping::isStopped() {
+    bool LocalMapping::isStopped()
+    {
         unique_lock<mutex> lock(mMutexStop);
         return mbStopped;
     }
 
-    bool LocalMapping::stopRequested() {
+    bool LocalMapping::stopRequested()
+    {
         unique_lock<mutex> lock(mMutexStop);
         return mbStopRequested;
     }
 
-    void LocalMapping::Release() {
+    void LocalMapping::Release()
+    {
         unique_lock<mutex> lock(mMutexStop);
         unique_lock<mutex> lock2(mMutexFinish);
         if (mbFinished)
@@ -1385,17 +1511,20 @@ namespace ygz {
         cout << "Local Mapping RELEASE" << endl;
     }
 
-    bool LocalMapping::AcceptKeyFrames() {
+    bool LocalMapping::AcceptKeyFrames()
+    {
         unique_lock<mutex> lock(mMutexAccept);
         return mbAcceptKeyFrames;
     }
 
-    void LocalMapping::SetAcceptKeyFrames(bool flag) {
+    void LocalMapping::SetAcceptKeyFrames(bool flag)
+    {
         unique_lock<mutex> lock(mMutexAccept);
         mbAcceptKeyFrames = flag;
     }
 
-    bool LocalMapping::SetNotStop(bool flag) {
+    bool LocalMapping::SetNotStop(bool flag)
+    {
         unique_lock<mutex> lock(mMutexStop);
 
         if (flag && mbStopped)
@@ -1406,7 +1535,8 @@ namespace ygz {
         return true;
     }
 
-    void LocalMapping::InterruptBA() {
+    void LocalMapping::InterruptBA()
+    {
         mbAbortBA = true;
     }
 
@@ -1416,7 +1546,8 @@ namespace ygz {
      * 在Covisibility Graph中的关键帧，其90%以上的MapPoints能被其他关键帧（至少3个）观测到，则认为该关键帧为冗余关键帧。
      * @see VI-E Local Keyframe Culling
      */
-    void LocalMapping::KeyFrameCulling() {
+    void LocalMapping::KeyFrameCulling()
+    {
         // Check redundant keyframes (only local keyframes)
         // A keyframe is considered redundant if the 90% of the MapPoints it sees, are seen
         // in at least other 3 keyframes (in the same or finer scale)
@@ -1426,21 +1557,23 @@ namespace ygz {
             return;
         SetFlagCopyInitKFs(true);
 
-        // TODO 用直接法追踪时，经常会有共视情况出现，需要调整这里的阈值以防太多东西都被culling掉
+        // TODO: 用直接法追踪时，经常会有共视情况出现，需要调整这里的阈值以防太多东西都被culling掉
         // 之前的原则是：若90%以上的MapPoints能被其他关键帧观测到，就认为该关键帧冗余。
         vector<KeyFrame *> vpLocalKeyFrames = mpCurrentKeyFrame->GetVectorCovisibleKeyFrames();
 
         for (vector<KeyFrame *>::iterator vit = vpLocalKeyFrames.begin(), vend = vpLocalKeyFrames.end();
-             vit != vend; vit++) {
+             vit != vend; vit++)
+        {
             KeyFrame *pKF = *vit;
             if (pKF->mnId == 0)
                 continue;
 
-            // TODO check this
+            // TODO: check this
             if ((mpCurrentKeyFrame->mnId - pKF->mnId) <= 10)
-                continue;  // don't remove nearby key-frames in vio
+                continue; // don't remove nearby key-frames in vio
 
-            if (mbUseIMU) {
+            if (mbUseIMU)
+            {
                 // Don't drop the KF before current KF
                 if (pKF->GetNextKeyFrame() == mpCurrentKeyFrame)
                     continue;
@@ -1449,41 +1582,48 @@ namespace ygz {
                     continue;
             }
 
-
             const vector<MapPoint *> vpMapPoints = pKF->GetMapPointMatches();
 
             int nObs = 3;
             const int thObs = nObs;
             int nRedundantObservations = 0;
             int nMPs = 0;
-            for (size_t i = 0, iend = vpMapPoints.size(); i < iend; i++) {
+            for (size_t i = 0, iend = vpMapPoints.size(); i < iend; i++)
+            {
                 MapPoint *pMP = vpMapPoints[i];
-                if (pMP) {
-                    if (!pMP->isBad()) {
-                        if (!mbMonocular) {
+                if (pMP)
+                {
+                    if (!pMP->isBad())
+                    {
+                        if (!mbMonocular)
+                        {
                             if (pKF->mvDepth[i] > pKF->mThDepth || pKF->mvDepth[i] < 0)
                                 continue;
                         }
 
                         nMPs++;
-                        if (pMP->Observations() > thObs) {
+                        if (pMP->Observations() > thObs)
+                        {
                             const int &scaleLevel = pKF->mvKeys[i].octave;
                             const map<KeyFrame *, size_t> observations = pMP->GetObservations();
                             int nObs = 0;
                             for (map<KeyFrame *, size_t>::const_iterator mit = observations.begin(), mend = observations.end();
-                                 mit != mend; mit++) {
+                                 mit != mend; mit++)
+                            {
                                 KeyFrame *pKFi = mit->first;
                                 if (pKFi == pKF)
                                     continue;
                                 const int &scaleLeveli = pKFi->mvKeys[mit->second].octave;
 
-                                if (scaleLeveli <= scaleLevel + 1) {
+                                if (scaleLeveli <= scaleLevel + 1)
+                                {
                                     nObs++;
                                     if (nObs >= thObs)
                                         break;
                                 }
                             }
-                            if (nObs >= thObs) {
+                            if (nObs >= thObs)
+                            {
                                 nRedundantObservations++;
                             }
                         }
@@ -1491,7 +1631,8 @@ namespace ygz {
                 }
             }
 
-            if (nRedundantObservations > 0.9 * nMPs) {
+            if (nRedundantObservations > 0.9 * nMPs)
+            {
                 pKF->SetBadFlag();
             }
         }
@@ -1499,13 +1640,15 @@ namespace ygz {
         SetFlagCopyInitKFs(false);
     }
 
-    void LocalMapping::RequestReset() {
+    void LocalMapping::RequestReset()
+    {
         {
             unique_lock<mutex> lock(mMutexReset);
             mbResetRequested = true;
         }
 
-        while (1) {
+        while (1)
+        {
             {
                 unique_lock<mutex> lock2(mMutexReset);
                 if (!mbResetRequested)
@@ -1515,19 +1658,24 @@ namespace ygz {
         }
     }
 
-    void LocalMapping::ResetIfRequested() {
+    void LocalMapping::ResetIfRequested()
+    {
         unique_lock<mutex> lock(mMutexReset);
-        if (mbResetRequested) {
-            if (GetVINSIniting()) {
+        if (mbResetRequested)
+        {
+            if (GetVINSIniting())
+            {
                 // Wait VINS init finish
                 cout << "Reset, wait VINS init finish" << endl;
                 SetResetVINSInit(true);
-                while (GetVINSIniting()) {
+                while (GetVINSIniting())
+                {
                     usleep(10000);
                 }
             }
 
-            if (mptLocalMappingVIOInit) {
+            if (mptLocalMappingVIOInit)
+            {
                 cout << "Detach and delete VINS init thread" << endl;
                 mptLocalMappingVIOInit->detach();
                 delete mptLocalMappingVIOInit;
@@ -1546,26 +1694,30 @@ namespace ygz {
         }
     }
 
-    void LocalMapping::RequestFinish() {
+    void LocalMapping::RequestFinish()
+    {
         unique_lock<mutex> lock(mMutexFinish);
         mbFinishRequested = true;
     }
 
-    bool LocalMapping::CheckFinish() {
+    bool LocalMapping::CheckFinish()
+    {
         unique_lock<mutex> lock(mMutexFinish);
         return mbFinishRequested;
     }
 
-    void LocalMapping::SetFinish() {
+    void LocalMapping::SetFinish()
+    {
         unique_lock<mutex> lock(mMutexFinish);
         mbFinished = true;
         unique_lock<mutex> lock2(mMutexStop);
         mbStopped = true;
     }
 
-    bool LocalMapping::isFinished() {
+    bool LocalMapping::isFinished()
+    {
         unique_lock<mutex> lock(mMutexFinish);
         return mbFinished;
     }
 
-} //namespace ygz
+} // namespace ygz

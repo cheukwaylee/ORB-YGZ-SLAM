@@ -35,57 +35,65 @@
 #include "../stuff/color_macros.h"
 #include "../stuff/string_tools.h"
 
-namespace g2o {
+namespace g2o
+{
 
   using namespace std;
 
-  ParameterContainer::ParameterContainer(bool isMainStorage_) :
-    _isMainStorage(isMainStorage_)
+  ParameterContainer::ParameterContainer(bool isMainStorage_) : _isMainStorage(isMainStorage_)
   {
   }
 
-  void ParameterContainer::clear() {
+  void ParameterContainer::clear()
+  {
     if (!_isMainStorage)
       return;
-    for (iterator it = begin(); it!=end(); it++){
+    for (iterator it = begin(); it != end(); it++)
+    {
       delete it->second;
     }
     BaseClass::clear();
   }
 
-  ParameterContainer::~ParameterContainer(){
+  ParameterContainer::~ParameterContainer()
+  {
     clear();
   }
 
-  bool ParameterContainer::addParameter(Parameter* p){
-    if (p->id()<0)
+  bool ParameterContainer::addParameter(Parameter *p)
+  {
+    if (p->id() < 0)
       return false;
-    iterator it=find(p->id());
-    if (it!=end())
+    iterator it = find(p->id());
+    if (it != end())
       return false;
     insert(make_pair(p->id(), p));
     return true;
   }
 
-  Parameter* ParameterContainer::getParameter(int id) {
-    iterator it=find(id);
-    if (it==end())
+  Parameter *ParameterContainer::getParameter(int id)
+  {
+    iterator it = find(id);
+    if (it == end())
       return 0;
     return it->second;
   }
 
-  Parameter* ParameterContainer::detachParameter(int id){
-    iterator it=find(id);
-    if (it==end())
+  Parameter *ParameterContainer::detachParameter(int id)
+  {
+    iterator it = find(id);
+    if (it == end())
       return 0;
-    Parameter* p=it->second;
+    Parameter *p = it->second;
     erase(it);
     return p;
   }
-  
-  bool ParameterContainer::write(std::ostream& os) const{
-    Factory* factory = Factory::instance();
-    for (const_iterator it=begin(); it!=end(); it++){
+
+  bool ParameterContainer::write(std::ostream &os) const
+  {
+    Factory *factory = Factory::instance();
+    for (const_iterator it = begin(); it != end(); it++)
+    {
       os << factory->tag(it->second) << " ";
       os << it->second->id() << " ";
       it->second->write(os);
@@ -94,49 +102,57 @@ namespace g2o {
     return true;
   }
 
-  bool ParameterContainer::read(std::istream& is, const std::map<std::string, std::string>* _renamedTypesLookup){
+  bool ParameterContainer::read(std::istream &is, const std::map<std::string, std::string> *_renamedTypesLookup)
+  {
     stringstream currentLine;
     string token;
 
-    Factory* factory = Factory::instance();
+    Factory *factory = Factory::instance();
     HyperGraph::GraphElemBitset elemBitset;
     elemBitset[HyperGraph::HGET_PARAMETER] = 1;
-    
-    while (1) {
+
+    while (1)
+    {
       int bytesRead = readLine(is, currentLine);
       if (bytesRead == -1)
         break;
       currentLine >> token;
       if (bytesRead == 0 || token.size() == 0 || token[0] == '#')
         continue;
-      if (_renamedTypesLookup && _renamedTypesLookup->size()>0){
-	map<string, string>::const_iterator foundIt = _renamedTypesLookup->find(token);
-	if (foundIt != _renamedTypesLookup->end()) {
-	  token = foundIt->second;
-	}
+      if (_renamedTypesLookup && _renamedTypesLookup->size() > 0)
+      {
+        map<string, string>::const_iterator foundIt = _renamedTypesLookup->find(token);
+        if (foundIt != _renamedTypesLookup->end())
+        {
+          token = foundIt->second;
+        }
       }
 
-      HyperGraph::HyperGraphElement* element = factory->construct(token, elemBitset);
-      if (! element) // not a parameter or otherwise unknown tag
+      HyperGraph::HyperGraphElement *element = factory->construct(token, elemBitset);
+      if (!element) // not a parameter or otherwise unknown tag
         continue;
       assert(element->elementType() == HyperGraph::HGET_PARAMETER && "Should be a param");
 
-      Parameter* p = static_cast<Parameter*>(element);
+      Parameter *p = static_cast<Parameter *>(element);
       int pid;
       currentLine >> pid;
       p->setId(pid);
       bool r = p->read(currentLine);
-      if (! r) {
+      if (!r)
+      {
         cerr << __PRETTY_FUNCTION__ << ": Error reading data " << token << " for parameter " << pid << endl;
         delete p;
-      } else {
-        if (! addParameter(p) ){
+      }
+      else
+      {
+        if (!addParameter(p))
+        {
           cerr << __PRETTY_FUNCTION__ << ": Parameter of type:" << token << " id:" << pid << " already defined" << endl;
         }
       }
     } // while read line
-    
+
     return true;
   }
-  
+
 } // end namespace

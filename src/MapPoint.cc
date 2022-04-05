@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "MapPoint.h"
 #include "ORBmatcher.h"
@@ -24,22 +24,23 @@
 
 // 地图点
 
-namespace ygz {
+namespace ygz
+{
 
     long unsigned int MapPoint::nNextId = 0;
     mutex MapPoint::mGlobalMutex;
 
-    MapPoint::MapPoint(const Vector3f &Pos, KeyFrame *pRefKF, Map *pMap) :
-            mnFirstKFid(pRefKF->mnId), mnFirstFrame(pRefKF->mnFrameId),
-            mpRefKF(pRefKF), mpMap(pMap),
-            mWorldPos(Pos) {
+    MapPoint::MapPoint(const Vector3f &Pos, KeyFrame *pRefKF, Map *pMap) : mnFirstKFid(pRefKF->mnId), mnFirstFrame(pRefKF->mnFrameId),
+                                                                           mpRefKF(pRefKF), mpMap(pMap),
+                                                                           mWorldPos(Pos)
+    {
         // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
         unique_lock<mutex> lock(mpMap->mMutexPointCreation);
         mnId = nNextId++;
     }
 
-    MapPoint::MapPoint(const Vector3f &Pos, Map *pMap, Frame *pFrame, const int &idxF) :
-            mnFirstFrame(pFrame->mnId), mpMap(pMap), mWorldPos(Pos) {
+    MapPoint::MapPoint(const Vector3f &Pos, Map *pMap, Frame *pFrame, const int &idxF) : mnFirstFrame(pFrame->mnId), mpMap(pMap), mWorldPos(Pos)
+    {
         Vector3f Ow = pFrame->GetCameraCenter();
         mNormalVector = mWorldPos - Ow;
         mNormalVector = mNormalVector / mNormalVector.norm();
@@ -60,28 +61,33 @@ namespace ygz {
         mnId = nNextId++;
     }
 
-    void MapPoint::SetWorldPos(const Vector3f &Pos) {
+    void MapPoint::SetWorldPos(const Vector3f &Pos)
+    {
         unique_lock<mutex> lock2(mGlobalMutex);
         unique_lock<mutex> lock(mMutexPos);
         mWorldPos = Pos;
     }
 
-    Vector3f MapPoint::GetWorldPos() {
+    Vector3f MapPoint::GetWorldPos()
+    {
         unique_lock<mutex> lock(mMutexPos);
         return mWorldPos;
     }
 
-    Vector3f MapPoint::GetNormal() {
+    Vector3f MapPoint::GetNormal()
+    {
         unique_lock<mutex> lock(mMutexPos);
         return mNormalVector;
     }
 
-    KeyFrame *MapPoint::GetReferenceKeyFrame() {
+    KeyFrame *MapPoint::GetReferenceKeyFrame()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return mpRefKF;
     }
 
-    void MapPoint::AddObservation(KeyFrame *pKF, size_t idx) {
+    void MapPoint::AddObservation(KeyFrame *pKF, size_t idx)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         if (mObservations.count(pKF))
             return;
@@ -93,11 +99,13 @@ namespace ygz {
             nObs++;
     }
 
-    void MapPoint::EraseObservation(KeyFrame *pKF) {
+    void MapPoint::EraseObservation(KeyFrame *pKF)
+    {
         bool bBad = false;
         {
             unique_lock<mutex> lock(mMutexFeatures);
-            if (mObservations.count(pKF)) {
+            if (mObservations.count(pKF))
+            {
                 int idx = mObservations[pKF];
                 if (pKF->mvuRight[idx] >= 0)
                     nObs -= 2;
@@ -119,17 +127,20 @@ namespace ygz {
             SetBadFlag();
     }
 
-    map<KeyFrame *, size_t> MapPoint::GetObservations() {
+    map<KeyFrame *, size_t> MapPoint::GetObservations()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return mObservations;
     }
 
-    int MapPoint::Observations() {
+    int MapPoint::Observations()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return nObs;
     }
 
-    void MapPoint::SetBadFlag() {
+    void MapPoint::SetBadFlag()
+    {
         map<KeyFrame *, size_t> obs;
         {
             unique_lock<mutex> lock1(mMutexFeatures);
@@ -138,7 +149,8 @@ namespace ygz {
             obs = mObservations;
             mObservations.clear();
         }
-        for (map<KeyFrame *, size_t>::iterator mit = obs.begin(), mend = obs.end(); mit != mend; mit++) {
+        for (map<KeyFrame *, size_t>::iterator mit = obs.begin(), mend = obs.end(); mit != mend; mit++)
+        {
             KeyFrame *pKF = mit->first;
             pKF->EraseMapPointMatch(mit->second);
         }
@@ -146,13 +158,15 @@ namespace ygz {
         mpMap->EraseMapPoint(this);
     }
 
-    MapPoint *MapPoint::GetReplaced() {
+    MapPoint *MapPoint::GetReplaced()
+    {
         unique_lock<mutex> lock1(mMutexFeatures);
         unique_lock<mutex> lock2(mMutexPos);
         return mpReplaced;
     }
 
-    void MapPoint::Replace(MapPoint *pMP) {
+    void MapPoint::Replace(MapPoint *pMP)
+    {
         if (pMP->mnId == this->mnId)
             return;
 
@@ -169,14 +183,18 @@ namespace ygz {
             mpReplaced = pMP;
         }
 
-        for (map<KeyFrame *, size_t>::iterator mit = obs.begin(), mend = obs.end(); mit != mend; mit++) {
+        for (map<KeyFrame *, size_t>::iterator mit = obs.begin(), mend = obs.end(); mit != mend; mit++)
+        {
             // Replace measurement in keyframe
             KeyFrame *pKF = mit->first;
 
-            if (!pMP->IsInKeyFrame(pKF)) {
+            if (!pMP->IsInKeyFrame(pKF))
+            {
                 pKF->ReplaceMapPointMatch(mit->second, pMP);
                 pMP->AddObservation(pKF, mit->second);
-            } else {
+            }
+            else
+            {
                 pKF->EraseMapPointMatch(mit->second);
             }
         }
@@ -187,28 +205,33 @@ namespace ygz {
         mpMap->EraseMapPoint(this);
     }
 
-    bool MapPoint::isBad() {
+    bool MapPoint::isBad()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         unique_lock<mutex> lock2(mMutexPos);
         return mbBad;
     }
 
-    void MapPoint::IncreaseVisible(int n) {
+    void MapPoint::IncreaseVisible(int n)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         mnVisible += n;
     }
 
-    void MapPoint::IncreaseFound(int n) {
+    void MapPoint::IncreaseFound(int n)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         mnFound += n;
     }
 
-    float MapPoint::GetFoundRatio() {
+    float MapPoint::GetFoundRatio()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return static_cast<float>(mnFound) / mnVisible;
     }
 
-    void MapPoint::ComputeDistinctiveDescriptors() {
+    void MapPoint::ComputeDistinctiveDescriptors()
+    {
         // Retrieve all observed descriptors
         vector<cv::Mat> vDescriptors;
 
@@ -227,7 +250,8 @@ namespace ygz {
         vDescriptors.reserve(observations.size());
 
         for (map<KeyFrame *, size_t>::iterator mit = observations.begin(), mend = observations.end();
-             mit != mend; mit++) {
+             mit != mend; mit++)
+        {
             KeyFrame *pKF = mit->first;
 
             if (!pKF->isBad())
@@ -241,9 +265,11 @@ namespace ygz {
         const size_t N = vDescriptors.size();
 
         float Distances[N][N];
-        for (size_t i = 0; i < N; i++) {
+        for (size_t i = 0; i < N; i++)
+        {
             Distances[i][i] = 0;
-            for (size_t j = i + 1; j < N; j++) {
+            for (size_t j = i + 1; j < N; j++)
+            {
                 int distij = ORBmatcher::DescriptorDistance(vDescriptors[i], vDescriptors[j]);
                 Distances[i][j] = distij;
                 Distances[j][i] = distij;
@@ -253,12 +279,14 @@ namespace ygz {
         // Take the descriptor with least median distance to the rest
         int BestMedian = INT_MAX;
         int BestIdx = 0;
-        for (size_t i = 0; i < N; i++) {
+        for (size_t i = 0; i < N; i++)
+        {
             vector<int> vDists(Distances[i], Distances[i] + N);
             sort(vDists.begin(), vDists.end());
             int median = vDists[0.5 * (N - 1)];
 
-            if (median < BestMedian) {
+            if (median < BestMedian)
+            {
                 BestMedian = median;
                 BestIdx = i;
             }
@@ -270,12 +298,14 @@ namespace ygz {
         }
     }
 
-    cv::Mat MapPoint::GetDescriptor() {
+    cv::Mat MapPoint::GetDescriptor()
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return mDescriptor.clone();
     }
 
-    int MapPoint::GetIndexInKeyFrame(KeyFrame *pKF) {
+    int MapPoint::GetIndexInKeyFrame(KeyFrame *pKF)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         if (mObservations.count(pKF))
             return mObservations[pKF];
@@ -283,12 +313,14 @@ namespace ygz {
             return -1;
     }
 
-    bool MapPoint::IsInKeyFrame(KeyFrame *pKF) {
+    bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
+    {
         unique_lock<mutex> lock(mMutexFeatures);
         return (mObservations.count(pKF));
     }
 
-    void MapPoint::UpdateNormalAndDepth() {
+    void MapPoint::UpdateNormalAndDepth()
+    {
         map<KeyFrame *, size_t> observations;
         KeyFrame *pRefKF;
         Vector3f Pos;
@@ -309,7 +341,8 @@ namespace ygz {
         Vector3f normal(0, 0, 0);
         int n = 0;
         for (map<KeyFrame *, size_t>::iterator mit = observations.begin(), mend = observations.end();
-             mit != mend; mit++) {
+             mit != mend; mit++)
+        {
             KeyFrame *pKF = mit->first;
             Vector3f Owi = pKF->GetCameraCenter();
             Vector3f normali = mWorldPos - Owi;
@@ -330,17 +363,20 @@ namespace ygz {
         }
     }
 
-    float MapPoint::GetMinDistanceInvariance() {
+    float MapPoint::GetMinDistanceInvariance()
+    {
         unique_lock<mutex> lock(mMutexPos);
         return 0.8f * mfMinDistance;
     }
 
-    float MapPoint::GetMaxDistanceInvariance() {
+    float MapPoint::GetMaxDistanceInvariance()
+    {
         unique_lock<mutex> lock(mMutexPos);
         return 1.2f * mfMaxDistance;
     }
 
-    int MapPoint::PredictScale(const float &currentDist, KeyFrame *pKF) {
+    int MapPoint::PredictScale(const float &currentDist, KeyFrame *pKF)
+    {
         float ratio;
         {
             unique_lock<mutex> lock(mMutexPos);
@@ -356,7 +392,8 @@ namespace ygz {
         return nScale;
     }
 
-    int MapPoint::PredictScale(const float &currentDist, Frame *pF) {
+    int MapPoint::PredictScale(const float &currentDist, Frame *pF)
+    {
         float ratio;
         {
             unique_lock<mutex> lock(mMutexPos);
@@ -372,5 +409,4 @@ namespace ygz {
         return nScale;
     }
 
-
-} //namespace ygz
+} // namespace ygz

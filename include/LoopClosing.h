@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef YGZ_LOOPCLOSING_H_
 #define YGZ_LOOPCLOSING_H_
@@ -28,7 +28,8 @@
 // Loop closing 线程
 // 基本没动，除了加IMU部分
 
-namespace ygz {
+namespace ygz
+{
 
     class Tracking;
 
@@ -42,12 +43,14 @@ namespace ygz {
 
     class MapPoint;
 
-    class LoopClosing {
+    class LoopClosing
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         typedef pair<set<KeyFrame *>, int> ConsistentGroup;
         typedef map<KeyFrame *, g2o::Sim3, std::less<KeyFrame *>,
-                Eigen::aligned_allocator<std::pair<KeyFrame *const, g2o::Sim3> > > KeyFrameAndPose;
+                    Eigen::aligned_allocator<std::pair<KeyFrame *const, g2o::Sim3>>>
+            KeyFrameAndPose;
 
         LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale, ConfigParam *pParams);
 
@@ -65,12 +68,14 @@ namespace ygz {
         // This function will run in a separate thread
         void RunGlobalBundleAdjustment(unsigned long nLoopKF);
 
-        bool isRunningGBA() {
+        bool isRunningGBA()
+        {
             unique_lock<std::mutex> lock(mMutexGBA);
             return mbRunningGBA;
         }
 
-        bool isFinishedGBA() {
+        bool isFinishedGBA()
+        {
             unique_lock<std::mutex> lock(mMutexGBA);
             return mbFinishedGBA;
         }
@@ -87,7 +92,6 @@ namespace ygz {
         void SetMapUpdateFlagInTracking(bool bflag);
 
     protected:
-
         bool CheckNewKeyFrames();
 
         bool DetectLoop();
@@ -154,6 +158,6 @@ namespace ygz {
         bool mbMapUpdateFlagForTracking = false;
     };
 
-} //namespace ygz
+} // namespace ygz
 
 #endif // LOOPCLOSING_H

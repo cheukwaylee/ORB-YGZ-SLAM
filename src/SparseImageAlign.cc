@@ -2,14 +2,15 @@
 #include "Frame.h"
 #include "MapPoint.h"
 
-namespace ygz {
+namespace ygz
+{
 
     SparseImgAlign::SparseImgAlign(
-            int max_level, int min_level, int n_iter,
-            Method method, bool display, bool verbose) :
-            display_(display),
-            max_level_(max_level),
-            min_level_(min_level) {
+        int max_level, int min_level, int n_iter,
+        Method method, bool display, bool verbose) : display_(display),
+                                                     max_level_(max_level),
+                                                     min_level_(min_level)
+    {
         n_iter_ = n_iter;
         n_iter_init_ = n_iter_;
         method_ = method;
@@ -17,11 +18,13 @@ namespace ygz {
         eps_ = 0.000001;
     }
 
-    size_t SparseImgAlign::run(Frame *ref_frame, Frame *cur_frame, SE3f &TCR) {
+    size_t SparseImgAlign::run(Frame *ref_frame, Frame *cur_frame, SE3f &TCR)
+    {
 
         reset();
 
-        if (ref_frame->mvKeys.empty()) {
+        if (ref_frame->mvKeys.empty())
+        {
             LOG(WARNING) << "SparseImgAlign: no features to track!" << endl;
             return 0;
         }
@@ -36,7 +39,8 @@ namespace ygz {
         SE3f T_cur_from_ref(cur_frame->mTcw * ref_frame_->mTcw.inverse());
 
         int iterations[] = {10, 10, 10, 10, 10, 10};
-        for (level_ = max_level_; level_ >= min_level_; level_ -= 1) {
+        for (level_ = max_level_; level_ >= min_level_; level_ -= 1)
+        {
             mu_ = 0.1;
             jacobian_cache_.setZero();
             have_ref_patch_cache_ = false;
@@ -48,13 +52,15 @@ namespace ygz {
         return n_meas_ / patch_area_;
     }
 
-    Matrix<float, 6, 6> SparseImgAlign::getFisherInformation() {
+    Matrix<float, 6, 6> SparseImgAlign::getFisherInformation()
+    {
         float sigma_i_sq = 5e-4 * 255 * 255; // image noise
         Matrix<float, 6, 6> I = H_ / sigma_i_sq;
         return I;
     }
 
-    void SparseImgAlign::precomputeReferencePatches() {
+    void SparseImgAlign::precomputeReferencePatches()
+    {
         const int border = patch_halfsize_ + 1;
         const cv::Mat &ref_img = ref_frame_->mvImagePyramid[level_];
         const int stride = ref_img.cols;
@@ -63,7 +69,8 @@ namespace ygz {
 
         size_t feature_counter = 0;
 
-        for (int i = 0; i < ref_frame_->N; i++, ++feature_counter) {
+        for (int i = 0; i < ref_frame_->N; i++, ++feature_counter)
+        {
             MapPoint *mp = ref_frame_->mvpMapPoints[i];
             if (mp == nullptr || mp->isBad() || ref_frame_->mvbOutlier[i] == true)
                 continue;
@@ -97,30 +104,32 @@ namespace ygz {
             const float w_ref_bl = (1.0 - subpix_u_ref) * subpix_v_ref;
             const float w_ref_br = subpix_u_ref * subpix_v_ref;
             size_t pixel_counter = 0;
-            float *cache_ptr = reinterpret_cast<float *> ( ref_patch_cache_.data ) + patch_area_ * feature_counter;
-            for (int y = 0; y < patch_size_; ++y) {
-                uint8_t *ref_img_ptr = (uint8_t *) ref_img.data + (v_ref_i + y - patch_halfsize_) * stride +
+            float *cache_ptr = reinterpret_cast<float *>(ref_patch_cache_.data) + patch_area_ * feature_counter;
+            for (int y = 0; y < patch_size_; ++y)
+            {
+                uint8_t *ref_img_ptr = (uint8_t *)ref_img.data + (v_ref_i + y - patch_halfsize_) * stride +
                                        (u_ref_i - patch_halfsize_);
-                for (int x = 0; x < patch_size_; ++x, ++ref_img_ptr, ++cache_ptr, ++pixel_counter) {
+                for (int x = 0; x < patch_size_; ++x, ++ref_img_ptr, ++cache_ptr, ++pixel_counter)
+                {
                     // precompute interpolated reference patch color
                     *cache_ptr =
-                            w_ref_tl * ref_img_ptr[0] + w_ref_tr * ref_img_ptr[1] + w_ref_bl * ref_img_ptr[stride] +
-                            w_ref_br * ref_img_ptr[stride + 1];
+                        w_ref_tl * ref_img_ptr[0] + w_ref_tr * ref_img_ptr[1] + w_ref_bl * ref_img_ptr[stride] +
+                        w_ref_br * ref_img_ptr[stride + 1];
 
                     // we use the inverse compositional: thereby we can take the gradient always at the same position
                     // get gradient of warped image (~gradient at warped position)
                     float dx = 0.5f * ((w_ref_tl * ref_img_ptr[1] + w_ref_tr * ref_img_ptr[2] +
-                                        w_ref_bl * ref_img_ptr[stride + 1] + w_ref_br * ref_img_ptr[stride + 2])
-                                       - (w_ref_tl * ref_img_ptr[-1] + w_ref_tr * ref_img_ptr[0] +
-                                          w_ref_bl * ref_img_ptr[stride - 1] + w_ref_br * ref_img_ptr[stride]));
+                                        w_ref_bl * ref_img_ptr[stride + 1] + w_ref_br * ref_img_ptr[stride + 2]) -
+                                       (w_ref_tl * ref_img_ptr[-1] + w_ref_tr * ref_img_ptr[0] +
+                                        w_ref_bl * ref_img_ptr[stride - 1] + w_ref_br * ref_img_ptr[stride]));
                     float dy = 0.5f * ((w_ref_tl * ref_img_ptr[stride] + w_ref_tr * ref_img_ptr[1 + stride] +
-                                        w_ref_bl * ref_img_ptr[stride * 2] + w_ref_br * ref_img_ptr[stride * 2 + 1])
-                                       - (w_ref_tl * ref_img_ptr[-stride] + w_ref_tr * ref_img_ptr[1 - stride] +
-                                          w_ref_bl * ref_img_ptr[0] + w_ref_br * ref_img_ptr[1]));
+                                        w_ref_bl * ref_img_ptr[stride * 2] + w_ref_br * ref_img_ptr[stride * 2 + 1]) -
+                                       (w_ref_tl * ref_img_ptr[-stride] + w_ref_tr * ref_img_ptr[1 - stride] +
+                                        w_ref_bl * ref_img_ptr[0] + w_ref_br * ref_img_ptr[1]));
 
                     // cache the jacobian
                     jacobian_cache_.col(feature_counter * patch_area_ + pixel_counter) =
-                            (dx * frame_jac.row(0) + dy * frame_jac.row(1)) * (focal_length * scale);
+                        (dx * frame_jac.row(0) + dy * frame_jac.row(1)) * (focal_length * scale);
                 }
             }
         }
@@ -128,9 +137,10 @@ namespace ygz {
     }
 
     float SparseImgAlign::computeResiduals(
-            const SE3f &T_cur_from_ref,
-            bool linearize_system,
-            bool compute_weight_scale) {
+        const SE3f &T_cur_from_ref,
+        bool linearize_system,
+        bool compute_weight_scale)
+    {
         // Warp the (cur)rent image such that it aligns with the (ref)erence image
         const cv::Mat &cur_img = cur_frame_->mvImagePyramid[level_];
 
@@ -151,7 +161,8 @@ namespace ygz {
         size_t feature_counter = 0; // is used to compute the index of the cached jacobian
 
         size_t visible = 0;
-        for (int i = 0; i < ref_frame_->N; i++, feature_counter++) {
+        for (int i = 0; i < ref_frame_->N; i++, feature_counter++)
+        {
             // check if feature is within image
             if (visible_fts_[i] == false)
                 continue;
@@ -184,17 +195,19 @@ namespace ygz {
             const float w_cur_bl = (1.0 - subpix_u_cur) * subpix_v_cur;
             const float w_cur_br = subpix_u_cur * subpix_v_cur;
             float *ref_patch_cache_ptr =
-                    reinterpret_cast<float *> ( ref_patch_cache_.data ) + patch_area_ * feature_counter;
+                reinterpret_cast<float *>(ref_patch_cache_.data) + patch_area_ * feature_counter;
             size_t pixel_counter = 0; // is used to compute the index of the cached jacobian
-            for (int y = 0; y < patch_size_; ++y) {
-                uint8_t *cur_img_ptr = (uint8_t *) cur_img.data + (v_cur_i + y - patch_halfsize_) * stride +
+            for (int y = 0; y < patch_size_; ++y)
+            {
+                uint8_t *cur_img_ptr = (uint8_t *)cur_img.data + (v_cur_i + y - patch_halfsize_) * stride +
                                        (u_cur_i - patch_halfsize_);
 
-                for (int x = 0; x < patch_size_; ++x, ++pixel_counter, ++cur_img_ptr, ++ref_patch_cache_ptr) {
+                for (int x = 0; x < patch_size_; ++x, ++pixel_counter, ++cur_img_ptr, ++ref_patch_cache_ptr)
+                {
                     // compute residual
                     const float intensity_cur =
-                            w_cur_tl * cur_img_ptr[0] + w_cur_tr * cur_img_ptr[1] + w_cur_bl * cur_img_ptr[stride] +
-                            w_cur_br * cur_img_ptr[stride + 1];
+                        w_cur_tl * cur_img_ptr[0] + w_cur_tr * cur_img_ptr[1] + w_cur_bl * cur_img_ptr[stride] +
+                        w_cur_br * cur_img_ptr[stride + 1];
                     const float res = intensity_cur - (*ref_patch_cache_ptr);
 
                     // used to compute scale for robust cost
@@ -203,26 +216,27 @@ namespace ygz {
 
                     // robustification
                     float weight = 1.0;
-                    if (use_weights_) {
+                    if (use_weights_)
+                    {
                         weight = weight_function_->value(res / scale_);
                     }
 
                     chi2 += res * res * weight;
                     n_meas_++;
 
-                    if (linearize_system) {
+                    if (linearize_system)
+                    {
                         // compute Jacobian, weighted Hessian and weighted "steepest descend images" (times error)
                         const Vector6f J(jacobian_cache_.col(feature_counter * patch_area_ + pixel_counter));
                         H_.noalias() += J * J.transpose() * weight;
                         Jres_.noalias() -= J * res * weight;
                         if (display_)
-                            resimg_.at<float>((int) v_cur + y - patch_halfsize_, (int) u_cur + x - patch_halfsize_) =
-                                    res / 255.0;
+                            resimg_.at<float>((int)v_cur + y - patch_halfsize_, (int)u_cur + x - patch_halfsize_) =
+                                res / 255.0;
                     }
                 }
             }
         }
-
 
         // compute the weights on the first iteration
         if (compute_weight_scale && iter_ == 0)
@@ -230,28 +244,31 @@ namespace ygz {
         return chi2 / n_meas_;
     }
 
-    int SparseImgAlign::solve() {
+    int SparseImgAlign::solve()
+    {
         x_ = H_.ldlt().solve(Jres_);
-        if ((bool) std::isnan((float) x_[0]))
+        if ((bool)std::isnan((float)x_[0]))
             return 0;
         return 1;
     }
 
     void SparseImgAlign::update(
-            const ModelType &T_curold_from_ref,
-            ModelType &T_curnew_from_ref) {
+        const ModelType &T_curold_from_ref,
+        ModelType &T_curnew_from_ref)
+    {
         T_curnew_from_ref = T_curold_from_ref * SE3f::exp(-x_);
     }
 
     void SparseImgAlign::startIteration() {}
 
-    void SparseImgAlign::finishIteration() {
-        if (display_) {
+    void SparseImgAlign::finishIteration()
+    {
+        if (display_)
+        {
             cv::namedWindow("residuals", CV_WINDOW_AUTOSIZE);
             cv::imshow("residuals", resimg_ * 10);
             cv::waitKey(0);
         }
     }
 
-
-} // namespace ygz 
+} // namespace ygz

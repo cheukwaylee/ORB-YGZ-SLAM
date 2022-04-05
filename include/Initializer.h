@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef INITIALIZER_H
 #define INITIALIZER_H
 
@@ -26,16 +26,17 @@
 // THIS IS THE INITIALIZER FOR MONOCULAR SLAM. NOT USED IN THE STEREO OR RGBD CASE.
 // Change the cv::Mat matrix operations into eigen to accelerate
 // NOTE ORB里对初始化的检查颇多，实际当中由于后端有BA，事实上并没有太多必要
-namespace ygz {
+namespace ygz
+{
 
     /**
      * @brief 单目SLAM初始化相关，双目和RGBD不会使用这个类
      */
-    class Initializer {
+    class Initializer
+    {
         typedef pair<int, int> Match;
 
     public:
-
         // Fix the reference frame
         // 用reference frame来初始化，这个reference frame就是SLAM正式开始的第一帧
         Initializer(const Frame &ReferenceFrame, float sigma = 1.0, int iterations = 200);
@@ -47,7 +48,6 @@ namespace ygz {
                         Matrix3f &R21, Vector3f &t21, vector<Vector3f> &vP3D, vector<bool> &vbTriangulated);
 
     private:
-
         // 假设场景为平面情况下通过前两帧求取Homography矩阵(current frame 2 到 reference frame 1),并得到该模型的评分
         void FindHomography(vector<bool> &vbMatchesInliers, float &score, Matrix3f &H21);
 
@@ -78,10 +78,10 @@ namespace ygz {
 
         // 通过三角化方法，利用反投影矩阵将特征点恢复为3D点
         void Triangulate(
-                const Vector2f &kp1, const Vector2f &kp2,
-                const Eigen::Matrix<float, int(3), int(4)> &P1,
-                const Eigen::Matrix<float, int(3), int(4)> &P2,
-                Vector3f &x3D);
+            const Vector2f &kp1, const Vector2f &kp2,
+            const Eigen::Matrix<float, int(3), int(4)> &P1,
+            const Eigen::Matrix<float, int(3), int(4)> &P2,
+            Vector3f &x3D);
 
         // 归一化三维空间点和帧间位移t
         void Normalize(const vector<cv::KeyPoint> &vKeys, vector<Vector2f> &vNormalizedPoints, Matrix3f &T);
@@ -95,7 +95,6 @@ namespace ygz {
         // F矩阵通过结合内参可以得到Essential矩阵，该函数用于分解E矩阵，将得到4组解
         void DecomposeE(const Matrix3f &E, Matrix3f &R1, Matrix3f &R2, Vector3f &t);
 
-
         // Keypoints from Reference Frame (Frame 1)
         vector<cv::KeyPoint> mvKeys1; ///< 存储Reference Frame中的特征点
 
@@ -105,7 +104,7 @@ namespace ygz {
         // Current Matches from Reference to Current
         // Reference Frame: 1, Current Frame: 2
         vector<Match> mvMatches12; ///< Match的数据结构是pair,mvMatches12只记录Reference到Current匹配上的特征点对
-        vector<bool> mvbMatched1; ///< 记录Reference Frame的每个特征点在Current Frame是否有匹配的特征点
+        vector<bool> mvbMatched1;  ///< 记录Reference Frame的每个特征点在Current Frame是否有匹配的特征点
 
         // Calibration
         Matrix3f mK; ///< 相机内参
@@ -117,10 +116,9 @@ namespace ygz {
         int mMaxIterations; ///< 算Fundamental和Homography矩阵时RANSAC迭代次数
 
         // Ransac sets
-        vector<vector<size_t> > mvSets; ///< 二维容器，外层容器的大小为迭代次数，内层容器大小为每次迭代算H或F矩阵需要的点
-
+        vector<vector<size_t>> mvSets; ///< 二维容器，外层容器的大小为迭代次数，内层容器大小为每次迭代算H或F矩阵需要的点
     };
 
-} //namespace ygz
+} // namespace ygz
 
 #endif // INITIALIZER_H

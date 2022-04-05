@@ -3,9 +3,11 @@
 
 #include "Common.h"
 
-namespace ygz {
+namespace ygz
+{
 
-    class ConfigParam {
+    class ConfigParam
+    {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -56,7 +58,6 @@ namespace ygz {
         static double _g;
         static double _nVINSInitTime;
         static bool _bUseIMU;
-
     };
 
 }

@@ -1,22 +1,22 @@
 /**
-* This file is part of ORB-SLAM2.
-*
-* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
-* For more information see <https://github.com/raulmur/ORB_SLAM2>
-*
-* ORB-SLAM2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM2.
+ *
+ * Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+ * For more information see <https://github.com/raulmur/ORB_SLAM2>
+ *
+ * ORB-SLAM2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "Initializer.h"
 
@@ -26,10 +26,11 @@
 #include "ORBmatcher.h"
 #include "Converter.h"
 
+namespace ygz
+{
 
-namespace ygz {
-
-    Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iterations) {
+    Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iterations)
+    {
         mK = ReferenceFrame.mK;
 
         mvKeys1 = ReferenceFrame.mvKeys;
@@ -43,8 +44,9 @@ namespace ygz {
      * @brief 并行地计算基础矩阵和单应性矩阵，选取其中一个模型，恢复出最开始两帧之间的相对姿态以及点云
      */
     bool Initializer::Initialize(
-            const Frame &CurrentFrame, const vector<int> &vMatches12, Matrix3f &R21, Vector3f &t21,
-            vector<Vector3f> &vP3D, vector<bool> &vbTriangulated) {
+        const Frame &CurrentFrame, const vector<int> &vMatches12, Matrix3f &R21, Vector3f &t21,
+        vector<Vector3f> &vP3D, vector<bool> &vbTriangulated)
+    {
         // Fill structures with current keypoints and matches with reference frame
         // Reference Frame: 1, Current Frame: 2
         mvKeys2 = CurrentFrame.mvKeys;
@@ -52,11 +54,14 @@ namespace ygz {
         mvMatches12.clear();
         mvMatches12.reserve(mvKeys2.size());
         mvbMatched1.resize(mvKeys1.size());
-        for (size_t i = 0, iend = vMatches12.size(); i < iend; i++) {
-            if (vMatches12[i] >= 0) {
+        for (size_t i = 0, iend = vMatches12.size(); i < iend; i++)
+        {
+            if (vMatches12[i] >= 0)
+            {
                 mvMatches12.push_back(make_pair(i, vMatches12[i]));
                 mvbMatched1[i] = true;
-            } else
+            }
+            else
                 mvbMatched1[i] = false;
         }
 
@@ -67,20 +72,23 @@ namespace ygz {
         vAllIndices.reserve(N);
         vector<size_t> vAvailableIndices;
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             vAllIndices.push_back(i);
         }
 
         // Generate sets of 8 points for each RANSAC iteration
-        mvSets = vector<vector<size_t> >(mMaxIterations, vector<size_t>(8, 0));
+        mvSets = vector<vector<size_t>>(mMaxIterations, vector<size_t>(8, 0));
 
         DUtils::Random::SeedRandOnce(0);
 
-        for (int it = 0; it < mMaxIterations; it++) {
+        for (int it = 0; it < mMaxIterations; it++)
+        {
             vAvailableIndices = vAllIndices;
 
             // Select a minimum set
-            for (size_t j = 0; j < 8; j++) {
+            for (size_t j = 0; j < 8; j++)
+            {
                 int randi = DUtils::Random::RandomInt(0, vAvailableIndices.size() - 1);
                 int idx = vAvailableIndices[randi];
 
@@ -109,14 +117,14 @@ namespace ygz {
         // Try to reconstruct from homography or fundamental depending on the ratio (0.40-0.45)
         if (RH > 0.40)
             return ReconstructH(vbMatchesInliersH, H, mK, R21, t21, vP3D, vbTriangulated, 1.0, 50);
-        else //if(pF_HF>0.6)
+        else // if(pF_HF>0.6)
             return ReconstructF(vbMatchesInliersF, F, mK, R21, t21, vP3D, vbTriangulated, 1.0, 50);
 
         return false;
     }
 
-
-    void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, Matrix3f &H21) {
+    void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, Matrix3f &H21)
+    {
         // Number of putative matches
         const int N = mvMatches12.size();
 
@@ -139,9 +147,11 @@ namespace ygz {
         float currentScore;
 
         // Perform all RANSAC iterations and save the solution with highest score
-        for (int it = 0; it < mMaxIterations; it++) {
+        for (int it = 0; it < mMaxIterations; it++)
+        {
             // Select a minimum set
-            for (size_t j = 0; j < 8; j++) {
+            for (size_t j = 0; j < 8; j++)
+            {
                 int idx = mvSets[it][j];
 
                 vPn1i[j] = vPn1[mvMatches12[idx].first];
@@ -154,15 +164,14 @@ namespace ygz {
 
             currentScore = CheckHomography(H21i, H12i, vbCurrentInliers, mSigma);
 
-            if (currentScore > score) {
+            if (currentScore > score)
+            {
                 H21 = H21i;
                 vbMatchesInliers = vbCurrentInliers;
                 score = currentScore;
             }
         }
-
     }
-
 
     /**
      * @brief 计算基础矩阵
@@ -170,7 +179,8 @@ namespace ygz {
      * 假设场景为非平面情况下通过前两帧求取Fundamental矩阵(current frame 2 到 reference frame 1),并得到该模型的评分
      * 流程和FindHomograp  hy相似
      */
-    void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, Matrix3f &F21) {
+    void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, Matrix3f &F21)
+    {
         // Number of putative matches
         const int N = vbMatchesInliers.size();
 
@@ -193,9 +203,11 @@ namespace ygz {
         float currentScore;
 
         // Perform all RANSAC iterations and save the solution with highest score
-        for (int it = 0; it < mMaxIterations; it++) {
+        for (int it = 0; it < mMaxIterations; it++)
+        {
             // Select a minimum set
-            for (int j = 0; j < 8; j++) {
+            for (int j = 0; j < 8; j++)
+            {
                 int idx = mvSets[it][j];
 
                 vPn1i[j] = vPn1[mvMatches12[idx].first];
@@ -208,14 +220,14 @@ namespace ygz {
 
             currentScore = CheckFundamental(F21i, vbCurrentInliers, mSigma);
 
-            if (currentScore > score) {
+            if (currentScore > score)
+            {
                 F21 = F21i;
                 vbMatchesInliers = vbCurrentInliers;
                 score = currentScore;
             }
         }
     }
-
 
     // |x'|     | h1 h2 h3 ||x|
     // |y'| = a | h4 h5 h6 ||y|  简写: x' = a H x, a为一个尺度因子
@@ -236,10 +248,12 @@ namespace ygz {
      * @return     单应矩阵
      * @see        Multiple View Geometry in Computer Vision - Algorithm 4.2 p109
      */
-    Matrix3f Initializer::ComputeH21(const vector<Vector2f> &vP1, const vector<Vector2f> &vP2) {
+    Matrix3f Initializer::ComputeH21(const vector<Vector2f> &vP1, const vector<Vector2f> &vP2)
+    {
         const int N = vP1.size();
         Eigen::MatrixXf A(2 * N, 9);
-        for (size_t i = 0; i < N; i++) {
+        for (size_t i = 0; i < N; i++)
+        {
             const float u1 = vP1[i][0];
             const float v1 = vP1[i][1];
             const float u2 = vP2[i][0];
@@ -264,7 +278,6 @@ namespace ygz {
             A(2 * i + 1, 6) = -u2 * u1;
             A(2 * i + 1, 7) = -u2 * v1;
             A(2 * i + 1, 8) = -u2;
-
         }
 
         Eigen::JacobiSVD<Eigen::MatrixXf> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -273,9 +286,9 @@ namespace ygz {
 
         Matrix3f ret;
         ret << V(0, 8), V(1, 8), V(2, 8),
-                V(3, 8), V(4, 8), V(5, 8),
-                V(6, 8), V(7, 8), V(8, 8);
-        return ret;       // V 最后一列
+            V(3, 8), V(4, 8), V(5, 8),
+            V(6, 8), V(7, 8), V(8, 8);
+        return ret; // V 最后一列
     }
 
     // x'Fx = 0 整理可得：Af = 0
@@ -288,10 +301,12 @@ namespace ygz {
      * @return     基础矩阵
      * @see        Multiple View Geometry in Computer Vision - Algorithm 11.1 p282 (中文版 p191)
      */
-    Matrix3f Initializer::ComputeF21(const vector<Vector2f> &vP1, const vector<Vector2f> &vP2) {
+    Matrix3f Initializer::ComputeF21(const vector<Vector2f> &vP1, const vector<Vector2f> &vP2)
+    {
         const int N = vP1.size();
         Eigen::MatrixXf A(N, 9);
-        for (size_t i = 0; i < N; i++) {
+        for (size_t i = 0; i < N; i++)
+        {
             const float u1 = vP1[i][0];
             const float v1 = vP1[i][1];
             const float u2 = vP2[i][0];
@@ -312,8 +327,8 @@ namespace ygz {
         Eigen::MatrixXf V = svd.matrixV();
         Matrix3f Fpre;
         Fpre << V(0, 8), V(1, 8), V(2, 8),
-                V(3, 8), V(4, 8), V(5, 8),
-                V(6, 8), V(7, 8), V(8, 8);       // 最后一列转成3x3
+            V(3, 8), V(4, 8), V(5, 8),
+            V(6, 8), V(7, 8), V(8, 8); // 最后一列转成3x3
         Eigen::JacobiSVD<Eigen::Matrix3f> svd_F(Fpre, Eigen::ComputeFullU | Eigen::ComputeFullV);
         Vector3f sigma = svd_F.singularValues();
         return svd_F.matrixU() * Eigen::DiagonalMatrix<float, 3>(sigma[0], sigma[1], 0) *
@@ -331,7 +346,8 @@ namespace ygz {
      * 实际上算的是第二个图到第一个图的H重投影
      */
     float Initializer::CheckHomography(const Matrix3f &H21, const Matrix3f &H12, vector<bool> &vbMatchesInliers,
-                                       float sigma) {
+                                       float sigma)
+    {
         const int N = mvMatches12.size();
 
         const float h11 = H21(0, 0);
@@ -362,7 +378,8 @@ namespace ygz {
 
         const float invSigmaSquare = 1.0 / (sigma * sigma);
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             bool bIn = true;
 
             const cv::KeyPoint &kp1 = mvKeys1[mvMatches12[i].first];
@@ -414,7 +431,6 @@ namespace ygz {
         return score;
     }
 
-
     /**
      * @brief 对给定的fundamental matrix打分
      *
@@ -423,7 +439,8 @@ namespace ygz {
      * - Multiple View Geometry in Computer Vision - symmetric transfer errors: 4.2.2 Geometric distance
      * - Multiple View Geometry in Computer Vision - model selection 4.7.1 RANSAC
      */
-    float Initializer::CheckFundamental(const Matrix3f &F21, vector<bool> &vbMatchesInliers, float sigma) {
+    float Initializer::CheckFundamental(const Matrix3f &F21, vector<bool> &vbMatchesInliers, float sigma)
+    {
         const int N = mvMatches12.size();
 
         const float f11 = F21(0, 0);
@@ -445,7 +462,8 @@ namespace ygz {
 
         const float invSigmaSquare = 1.0 / (sigma * sigma);
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             bool bIn = true;
 
             const cv::KeyPoint &kp1 = mvKeys1[mvMatches12[i].first];
@@ -502,9 +520,10 @@ namespace ygz {
     }
 
     bool Initializer::ReconstructF(
-            vector<bool> &vbMatchesInliers, Matrix3f &F21, Matrix3f &K,
-            Matrix3f &R21, Vector3f &t21, vector<Vector3f> &vP3D,
-            vector<bool> &vbTriangulated, float minParallax, int minTriangulated) {
+        vector<bool> &vbMatchesInliers, Matrix3f &F21, Matrix3f &K,
+        Matrix3f &R21, Vector3f &t21, vector<Vector3f> &vP3D,
+        vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
+    {
         int N = 0;
         for (size_t i = 0, iend = vbMatchesInliers.size(); i < iend; i++)
             if (vbMatchesInliers[i])
@@ -551,37 +570,49 @@ namespace ygz {
             nsimilar++;
 
         // If there is not a clear winner or not enough triangulated points reject initialization
-        if (maxGood < nMinGood || nsimilar > 1) {
+        if (maxGood < nMinGood || nsimilar > 1)
+        {
             return false;
         }
 
         // If best reconstruction has enough parallax initialize
-        if (maxGood == nGood1) {
-            if (parallax1 > minParallax) {
+        if (maxGood == nGood1)
+        {
+            if (parallax1 > minParallax)
+            {
                 vP3D = vP3D1;
                 vbTriangulated = vbTriangulated1;
                 R21 = R1;
                 t21 = t1;
                 return true;
             }
-        } else if (maxGood == nGood2) {
-            if (parallax2 > minParallax) {
+        }
+        else if (maxGood == nGood2)
+        {
+            if (parallax2 > minParallax)
+            {
                 vP3D = vP3D2;
                 vbTriangulated = vbTriangulated2;
                 R21 = R2;
                 t21 = t1;
                 return true;
             }
-        } else if (maxGood == nGood3) {
-            if (parallax3 > minParallax) {
+        }
+        else if (maxGood == nGood3)
+        {
+            if (parallax3 > minParallax)
+            {
                 vP3D = vP3D3;
                 vbTriangulated = vbTriangulated3;
                 R21 = R1;
                 t21 = t2;
                 return true;
             }
-        } else if (maxGood == nGood4) {
-            if (parallax4 > minParallax) {
+        }
+        else if (maxGood == nGood4)
+        {
+            if (parallax4 > minParallax)
+            {
                 vP3D = vP3D4;
                 vbTriangulated = vbTriangulated4;
                 R21 = R2;
@@ -604,9 +635,10 @@ namespace ygz {
      * - Deeper understanding of the homography decomposition for vision-based control
      */
     bool Initializer::ReconstructH(
-            vector<bool> &vbMatchesInliers, Matrix3f &H21, Matrix3f &K,
-            Matrix3f &R21, Vector3f &t21, vector<Vector3f> &vP3D, vector<bool> &vbTriangulated, float minParallax,
-            int minTriangulated) {
+        vector<bool> &vbMatchesInliers, Matrix3f &H21, Matrix3f &K,
+        Matrix3f &R21, Vector3f &t21, vector<Vector3f> &vP3D, vector<bool> &vbTriangulated, float minParallax,
+        int minTriangulated)
+    {
         int N = 0;
         for (size_t i = 0, iend = vbMatchesInliers.size(); i < iend; i++)
             if (vbMatchesInliers[i])
@@ -629,7 +661,8 @@ namespace ygz {
         float d3 = (sigma[2]);
         float s = U.determinant() * V.determinant();
 
-        if (d1 / d2 < 1.00001 || d2 / d3 < 1.00001) {
+        if (d1 / d2 < 1.00001 || d2 / d3 < 1.00001)
+        {
             return false;
         }
 
@@ -639,19 +672,20 @@ namespace ygz {
         vt.reserve(8);
         vn.reserve(8);
 
-        //n'=[x1 0 x3] 4 posibilities e1=e3=1, e1=1 e3=-1, e1=-1 e3=1, e1=e3=-1
+        // n'=[x1 0 x3] 4 posibilities e1=e3=1, e1=1 e3=-1, e1=-1 e3=1, e1=e3=-1
         float aux1 = sqrt((d1 * d1 - d2 * d2) / (d1 * d1 - d3 * d3));
         float aux3 = sqrt((d2 * d2 - d3 * d3) / (d1 * d1 - d3 * d3));
         float x1[] = {aux1, aux1, -aux1, -aux1};
         float x3[] = {aux3, -aux3, aux3, -aux3};
 
-        //case d'=d2
+        // case d'=d2
         float aux_stheta = sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / ((d1 + d3) * d2);
 
         float ctheta = (d2 * d2 + d1 * d3) / ((d1 + d3) * d2);
         float stheta[] = {aux_stheta, -aux_stheta, -aux_stheta, aux_stheta};
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             Matrix3f Rp = Matrix3f::Identity();
             Rp(0, 0) = ctheta;
             Rp(0, 2) = -stheta[i];
@@ -681,13 +715,14 @@ namespace ygz {
             vn.push_back(n);
         }
 
-        //case d'=-d2
+        // case d'=-d2
         float aux_sphi = sqrt((d1 * d1 - d2 * d2) * (d2 * d2 - d3 * d3)) / ((d1 - d3) * d2);
 
         float cphi = (d1 * d3 - d2 * d2) / ((d1 - d3) * d2);
         float sphi[] = {aux_sphi, -aux_sphi, -aux_sphi, aux_sphi};
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             Matrix3f Rp = Matrix3f::Identity();
             Rp(0, 0) = cphi;
             Rp(0, 2) = sphi[i];
@@ -719,7 +754,6 @@ namespace ygz {
             vn.push_back(n);
         }
 
-
         int bestGood = 0;
         int secondBestGood = 0;
         int bestSolutionIdx = -1;
@@ -729,28 +763,32 @@ namespace ygz {
 
         // Instead of applying the visibility constraints proposed in the Faugeras' paper (which could fail for points seen with low parallax)
         // We reconstruct all hypotheses and check in terms of triangulated points and parallax
-        for (size_t i = 0; i < 8; i++) {
+        for (size_t i = 0; i < 8; i++)
+        {
             float parallaxi;
             vector<Vector3f> vP3Di;
             vector<bool> vbTriangulatedi;
             int nGood = CheckRT(vR[i], vt[i], mvKeys1, mvKeys2, mvMatches12, vbMatchesInliers, K, vP3Di, 4.0 * mSigma2,
                                 vbTriangulatedi, parallaxi);
 
-            if (nGood > bestGood) {
+            if (nGood > bestGood)
+            {
                 secondBestGood = bestGood;
                 bestGood = nGood;
                 bestSolutionIdx = i;
                 bestParallax = parallaxi;
                 bestP3D = vP3Di;
                 bestTriangulated = vbTriangulatedi;
-            } else if (nGood > secondBestGood) {
+            }
+            else if (nGood > secondBestGood)
+            {
                 secondBestGood = nGood;
             }
         }
 
-
         if (secondBestGood < 0.75 * bestGood && bestParallax >= minParallax && bestGood > minTriangulated &&
-            bestGood > 0.9 * N) {
+            bestGood > 0.9 * N)
+        {
             R21 = vR[bestSolutionIdx];
             t21 = vt[bestSolutionIdx];
             vP3D = bestP3D;
@@ -794,10 +832,11 @@ namespace ygz {
      * @see       Multiple View Geometry in Computer Vision - 12.2 Linear triangulation methods p312
      */
     void Initializer::Triangulate(
-            const Vector2f &kp1, const Vector2f &kp2,
-            const Eigen::Matrix<float, int(3), int(4)> &P1,
-            const Eigen::Matrix<float, int(3), int(4)> &P2,
-            Vector3f &x3D) {
+        const Vector2f &kp1, const Vector2f &kp2,
+        const Eigen::Matrix<float, int(3), int(4)> &P1,
+        const Eigen::Matrix<float, int(3), int(4)> &P2,
+        Vector3f &x3D)
+    {
         Eigen::Matrix4f A;
         A.block<1, 4>(0, 0) = kp1[0] * P1.block<1, 4>(2, 0) - P1.block<1, 4>(0, 0);
         A.block<1, 4>(1, 0) = kp1[1] * P1.block<1, 4>(2, 0) - P1.block<1, 4>(1, 0);
@@ -807,14 +846,16 @@ namespace ygz {
         x3D = svd.matrixV().block<3, 1>(0, 3) / svd.matrixV()(3, 3);
     }
 
-    void Initializer::Normalize(const vector<cv::KeyPoint> &vKeys, vector<Vector2f> &vNormalizedPoints, Matrix3f &T) {
+    void Initializer::Normalize(const vector<cv::KeyPoint> &vKeys, vector<Vector2f> &vNormalizedPoints, Matrix3f &T)
+    {
         float meanX = 0;
         float meanY = 0;
         const int N = vKeys.size();
 
         vNormalizedPoints.resize(N);
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             meanX += vKeys[i].pt.x;
             meanY += vKeys[i].pt.y;
         }
@@ -825,7 +866,8 @@ namespace ygz {
         float meanDevX = 0;
         float meanDevY = 0;
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             vNormalizedPoints[i][0] = vKeys[i].pt.x - meanX;
             vNormalizedPoints[i][1] = vKeys[i].pt.y - meanY;
 
@@ -839,7 +881,8 @@ namespace ygz {
         float sX = 1.0 / meanDevX;
         float sY = 1.0 / meanDevY;
 
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++)
+        {
             vNormalizedPoints[i][0] = vNormalizedPoints[i][0] * sX;
             vNormalizedPoints[i][1] = vNormalizedPoints[i][1] * sY;
         }
@@ -851,13 +894,13 @@ namespace ygz {
         T(1, 2) = -meanY * sY;
     }
 
-
     int Initializer::CheckRT(
-            const Matrix3f &R, const Vector3f &t,
-            const vector<cv::KeyPoint> &vKeys1,
-            const vector<cv::KeyPoint> &vKeys2,
-            const vector<Match> &vMatches12, vector<bool> &vbMatchesInliers,
-            const Matrix3f &K, vector<Vector3f> &vP3D, float th2, vector<bool> &vbGood, float &parallax) {
+        const Matrix3f &R, const Vector3f &t,
+        const vector<cv::KeyPoint> &vKeys1,
+        const vector<cv::KeyPoint> &vKeys2,
+        const vector<Match> &vMatches12, vector<bool> &vbMatchesInliers,
+        const Matrix3f &K, vector<Vector3f> &vP3D, float th2, vector<bool> &vbGood, float &parallax)
+    {
         // Calibration parameters
         const double fx = K(0, 0);
         const double fy = K(1, 1);
@@ -885,7 +928,8 @@ namespace ygz {
 
         int nGood = 0;
 
-        for (size_t i = 0, iend = vMatches12.size(); i < iend; i++) {
+        for (size_t i = 0, iend = vMatches12.size(); i < iend; i++)
+        {
             if (!vbMatchesInliers[i])
                 continue;
 
@@ -894,12 +938,12 @@ namespace ygz {
             Vector3f p3dC1;
 
             Triangulate(
-                    Vector2f(kp1.pt.x, kp1.pt.y),
-                    Vector2f(kp2.pt.x, kp2.pt.y),
-                    P1, P2, p3dC1
-            );
+                Vector2f(kp1.pt.x, kp1.pt.y),
+                Vector2f(kp2.pt.x, kp2.pt.y),
+                P1, P2, p3dC1);
 
-            if (!isfinite(p3dC1[0]) || !isfinite(p3dC1[1]) || !isfinite(p3dC1[2])) {
+            if (!isfinite(p3dC1[0]) || !isfinite(p3dC1[1]) || !isfinite(p3dC1[2]))
+            {
                 vbGood[vMatches12[i].first] = false;
                 continue;
             }
@@ -953,19 +997,22 @@ namespace ygz {
                 vbGood[vMatches12[i].first] = true;
         }
 
-        if (nGood > 0) {
+        if (nGood > 0)
+        {
             sort(vCosParallax.begin(), vCosParallax.end());
 
             size_t idx = min(50, int(vCosParallax.size() - 1));
             parallax = acos(vCosParallax[idx]) * 180 / CV_PI;
-        } else
+        }
+        else
             parallax = 0;
 
         return nGood;
     }
 
     void Initializer::DecomposeE(
-            const Matrix3f &E, Matrix3f &R1, Matrix3f &R2, Vector3f &t) {
+        const Matrix3f &E, Matrix3f &R1, Matrix3f &R2, Vector3f &t)
+    {
         Eigen::JacobiSVD<Matrix3f> svd(E, Eigen::ComputeFullU | Eigen::ComputeFullV);
         Matrix3f U = svd.matrixU(), V = svd.matrixV();
         t = U.block<3, 1>(0, 2);
@@ -984,7 +1031,6 @@ namespace ygz {
         R2 = U * W.transpose() * V.transpose();
         if (R2.determinant() < 0)
             R2 = -R2;
-
     }
 
-} //namespace ygz
+} // namespace ygz

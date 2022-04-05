@@ -12,7 +12,8 @@
 
 using namespace Eigen;
 
-namespace ygz {
+namespace ygz
+{
 
     /**
      * \brief Abstract Class for solving nonlinear least-squares (NLLS) problems.
@@ -27,26 +28,37 @@ namespace ygz {
      * T  : type of the model, e.g. SE2, SE3
      */
 
-    template<int D, typename T> // D是维度，E是模型类型
-    class NLLSSolver {
+    template <int D, typename T> // D是维度，E是模型类型
+    class NLLSSolver
+    {
 
     public:
         typedef T ModelType;
         // 高斯牛顿或LM优化
-        enum Method {
-            GaussNewton, LevenbergMarquardt
+        enum Method
+        {
+            GaussNewton,
+            LevenbergMarquardt
         };
-        enum ScaleEstimatorType {
-            UnitScale, TDistScale, MADScale, NormalScale
+        enum ScaleEstimatorType
+        {
+            UnitScale,
+            TDistScale,
+            MADScale,
+            NormalScale
         };
-        enum WeightFunctionType {
-            UnitWeight, TDistWeight, TukeyWeight, HuberWeight
+        enum WeightFunctionType
+        {
+            UnitWeight,
+            TDistWeight,
+            TukeyWeight,
+            HuberWeight
         };
 
     protected:
-        Matrix<float, D, D> H_;       //!< Hessian approximation
-        Matrix<float, D, 1> Jres_;    //!< Jacobian x Residual
-        Matrix<float, D, 1> x_;       //!< update step
+        Matrix<float, D, D> H_;    //!< Hessian approximation
+        Matrix<float, D, 1> Jres_; //!< Jacobian x Residual
+        Matrix<float, D, 1> x_;    //!< update step
 
         // 是否有先验
         bool have_prior_;
@@ -86,7 +98,6 @@ namespace ygz {
         finishTrial() {}
 
     public:
-
         /// Damping parameter. If mu > 0, coefficient matrix is positive definite, this
         /// ensures that x is a descent direction. If mu is large, x is a short step in
         /// the steepest direction. This is good if the current iterate is far from the
@@ -94,16 +105,15 @@ namespace ygz {
         /// have (almost) quadratic convergence in the final stages.
         float mu_init_, mu_;
         float nu_init_, nu_;          //!< Increase factor of mu after fail
-        size_t n_iter_init_, n_iter_;  //!< Number of Iterations
-        size_t n_trials_;              //!< Number of trials
-        size_t n_trials_max_;          //!< Max number of trials
-        size_t n_meas_;                //!< Number of measurements
-        bool stop_;                  //!< Stop flag
-        bool verbose_;               //!< Output Statistics
+        size_t n_iter_init_, n_iter_; //!< Number of Iterations
+        size_t n_trials_;             //!< Number of trials
+        size_t n_trials_max_;         //!< Max number of trials
+        size_t n_meas_;               //!< Number of measurements
+        bool stop_;                   //!< Stop flag
+        bool verbose_;                //!< Output Statistics
         float eps_;                   //!< Stop if update norm is smaller than eps
-        size_t iter_;                  //!< Current Iteration
+        size_t iter_;                 //!< Current Iteration
         bool error_increased_;
-
 
         // robust least squares
         bool use_weights_;
@@ -111,26 +121,25 @@ namespace ygz {
         robust_cost::ScaleEstimatorPtr scale_estimator_;
         robust_cost::WeightFunctionPtr weight_function_;
 
-        NLLSSolver() :
-                have_prior_(false),
-                method_(LevenbergMarquardt),
-                mu_init_(0.01f),
-                mu_(mu_init_),
-                nu_init_(2.0),
-                nu_(nu_init_),
-                n_iter_init_(15),
-                n_iter_(n_iter_init_),
-                n_trials_(0),
-                n_trials_max_(5),
-                n_meas_(0),
-                stop_(false),
-                verbose_(true),
-                eps_(0.0000000001),
-                iter_(0),
-                use_weights_(false),
-                scale_(0.0),
-                scale_estimator_(NULL),
-                weight_function_(NULL) {}
+        NLLSSolver() : have_prior_(false),
+                       method_(LevenbergMarquardt),
+                       mu_init_(0.01f),
+                       mu_(mu_init_),
+                       nu_init_(2.0),
+                       nu_(nu_init_),
+                       n_iter_init_(15),
+                       n_iter_(n_iter_init_),
+                       n_trials_(0),
+                       n_trials_max_(5),
+                       n_meas_(0),
+                       stop_(false),
+                       verbose_(true),
+                       eps_(0.0000000001),
+                       iter_(0),
+                       use_weights_(false),
+                       scale_(0.0),
+                       scale_estimator_(NULL),
+                       weight_function_(NULL) {}
 
         virtual ~NLLSSolver() {}
 
@@ -145,13 +154,13 @@ namespace ygz {
 
         /// Specify the robust cost that should be used and the appropriate scale estimator
         void setRobustCostFunction(
-                ScaleEstimatorType scale_estimator,
-                WeightFunctionType weight_function);
+            ScaleEstimatorType scale_estimator,
+            WeightFunctionType weight_function);
 
         /// Add prior to optimization.
         void setPrior(
-                const ModelType &prior,
-                const Matrix<float, D, D> &Information);
+            const ModelType &prior,
+            const Matrix<float, D, D> &Information);
 
         /// Reset all parameters to restart the optimization
         void reset();
@@ -163,12 +172,14 @@ namespace ygz {
         const Matrix<float, D, D> &getInformationMatrix() const;
     };
 
-
-    inline float norm_max(const Eigen::VectorXf &v) {
+    inline float norm_max(const Eigen::VectorXf &v)
+    {
         float max = -1;
-        for (int i = 0; i < v.size(); i++) {
+        for (int i = 0; i < v.size(); i++)
+        {
             float abs = fabs(v[i]);
-            if (abs > max) {
+            if (abs > max)
+            {
                 max = abs;
             }
         }
